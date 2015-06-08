@@ -63,6 +63,9 @@ public class WelcomeState implements State {
         for (int i = 0; i < str.length; i ++) {
         	view.textPane.append((i+3) + ". " + str[i] + view.newline);
         }
+        
+        // it should initialize the publisher
+        view.initPublisher("kim");
 		
 		view.setStatus(view.getNodeList());
 	}

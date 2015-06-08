@@ -15,12 +15,22 @@ import javax.swing.JTextPane;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.StyledDocument;
 
+import org.eclipse.paho.client.mqttv3.MqttClient;
+import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
+import org.eclipse.paho.client.mqttv3.MqttException;
+import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
+
 import iotanyware.DocumentSizeFilter;
 import iotanyware.View;
 
 public class View extends JFrame implements java.util.Observer{
     
 	static final int MAX_CHARACTERS = 300;
+	
+	private String broker = "tcp://broker.mqttdashboard.com:1883";
+	
+	MqttClient pubClient;
     
     private WelcomeState welcome;
     private NodeStatus status;
@@ -156,6 +166,50 @@ public class View extends JFrame implements java.util.Observer{
     
     public State getNodeRegister() {
     	return register;
+    }
+    
+    public void initPublisher(String clientId) {
+    	//It will make as session to event bus(mqtt broker)
+        MemoryPersistence persistence = new MemoryPersistence();
+
+        try {
+        	pubClient = new MqttClient(broker, clientId, persistence);
+            MqttConnectOptions connOpts = new MqttConnectOptions();
+            connOpts.setCleanSession(true);
+            System.out.println("Connecting to broker: " + broker);
+            pubClient.connect(connOpts);            
+        } catch(MqttException me) {
+            System.out.println("reason " + me.getReasonCode());
+            System.out.println("msg    " + me.getMessage());
+            System.out.println("loc    " + me.getLocalizedMessage());
+            System.out.println("cause  " + me.getCause());
+            System.out.println("excep  " + me);
+            me.printStackTrace();
+        }
+    }
+    
+    public void publishMessage(String topic, String payload, int qos) {
+    	System.out.println("Publishing topic  : " + topic);
+    	System.out.println("Publishing message: " + payload);
+    	
+    	int qosVale = 2;
+    	if( qos >= 0 && qos <= 2) {
+    		qosVale = qos;
+    	}
+    	
+    	try {
+	        MqttMessage message = new MqttMessage(payload.getBytes());
+	        message.setQos(qosVale);
+	        pubClient.publish(topic, message);
+	        System.out.println("Message published");
+    	} catch(MqttException me) {
+            System.out.println("reason " + me.getReasonCode());
+            System.out.println("msg    " + me.getMessage());
+            System.out.println("loc    " + me.getLocalizedMessage());
+            System.out.println("cause  " + me.getCause());
+            System.out.println("excep  " + me);
+            me.printStackTrace();
+        }
     }
     
 	@Override

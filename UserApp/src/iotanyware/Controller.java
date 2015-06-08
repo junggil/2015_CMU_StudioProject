@@ -8,7 +8,6 @@ import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
-import org.eclipse.paho.client.mqttv3.MqttPersistenceException;
 
 public class Controller implements KeyListener, MqttCallback {
 
@@ -107,8 +106,8 @@ public class Controller implements KeyListener, MqttCallback {
 	
 	public int initSubscriber(String sid) {
 		try {
-			String mqttUrl = broker; 	//"tcp://broker.mqttdashboard.com:1883";
-			String mqttId  = sid; 		//"kim";
+			String mqttUrl = broker;
+			String mqttId  = sid;
 			client = new MqttClient(mqttUrl, mqttId);
 			client.connect();
 			client.setCallback(this);
@@ -122,6 +121,7 @@ public class Controller implements KeyListener, MqttCallback {
 		return 0;
 	}
 	
+	/*
 	public void pubMessage(String topic, String payload) {
 		if(client == null) {
 			System.out.println("It is not connected to event bus!!!");
@@ -141,6 +141,7 @@ public class Controller implements KeyListener, MqttCallback {
 			e.printStackTrace();
 		}
 	}
+	*/
 
 	@Override
 	public void connectionLost(Throwable arg0) {

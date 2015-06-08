@@ -13,12 +13,14 @@ public class NodeList implements State {
 	public void enterNumber(int number) {
 		// TODO Auto-generated method stub
 		
+		view.publishMessage("testtopic/1", "test message", 0);
 	}
 
 	@Override
 	public void enterString(String string) {
 		// TODO Auto-generated method stub
 		
+		view.publishMessage("testtopic/1", string, 0);
 	}
 
 }
