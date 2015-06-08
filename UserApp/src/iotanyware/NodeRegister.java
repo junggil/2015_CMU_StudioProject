@@ -1,0 +1,22 @@
+package iotanyware;
+
+public class NodeRegister implements State {
+
+	View view;
+	public NodeRegister(View view) {
+		this.view = view;
+	}
+	
+	@Override
+	public void enterNumber(int number) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void enterString(String string) {
+		// TODO Auto-generated method stub
+		
+	}
+
+}

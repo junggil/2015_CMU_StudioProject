@@ -8,13 +8,17 @@ import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.eclipse.paho.client.mqttv3.MqttPersistenceException;
 
 public class Controller implements KeyListener, MqttCallback {
 
 	ModelSubscribe node;
 	View view;
 	
+	private String broker = "tcp://broker.mqttdashboard.com:1883";
+	
 	private MqttClient client;
+	private HTTPServerAdapter httpserver;
 
 	public void addModel(ModelSubscribe m){
 		System.out.println("Controller: adding model");
@@ -64,11 +68,14 @@ public class Controller implements KeyListener, MqttCallback {
 		    		view.enterNumber(number);
 		    	} catch (NumberFormatException nfe){
 		    		System.out.println(str[lastStringIndex-1] + " is not number!");
+		    		
+		    		//if current view state is for login, it progress the login here
 		    		if(view.getStatus() == view.getWelcomeState()) {
 		    			if(progressLogin(str[lastStringIndex-1]) < 0) {
 		    				System.out.println("Login Failed");
 		    			} 
 		    			else {
+		    				//after login, get the node list and pass it to view by string.
 		    				view.enterString("Node#1/Node#2");
 		    			}
 		    		}
@@ -82,13 +89,26 @@ public class Controller implements KeyListener, MqttCallback {
 	
 	public int progressLogin(String loginStr) {
 		
-		return initSubscriber();
+		String[] str = loginStr.split("/");
+
+		if( str.length != 2) {
+			System.out.println("Invalid input for log-in");
+			return -1;
+		}
+		
+		httpserver = new HTTPServerAdapter();
+		String sid = httpserver.loginProgess(str[0], str[1]);
+		if( sid == null ) {
+			System.out.println("Login was failed!");
+			return -1;
+		}
+		return initSubscriber(sid);
 	}
 	
-	public int initSubscriber() {
+	public int initSubscriber(String sid) {
 		try {
-			String mqttUrl = "tcp://broker.mqttdashboard.com:1883";
-			String mqttId = "kim";
+			String mqttUrl = broker; 	//"tcp://broker.mqttdashboard.com:1883";
+			String mqttId  = sid; 		//"kim";
 			client = new MqttClient(mqttUrl, mqttId);
 			client.connect();
 			client.setCallback(this);
@@ -102,9 +122,24 @@ public class Controller implements KeyListener, MqttCallback {
 		return 0;
 	}
 	
-	public int initPubliser() {
+	public void pubMessage(String topic, String payload) {
+		if(client == null) {
+			System.out.println("It is not connected to event bus!!!");
+			return;
+		}
 		
-		return 0;
+		MqttMessage message = new MqttMessage();
+		
+		message.setPayload(payload.getBytes());
+		try {
+			client.publish(topic, message);
+		} catch (MqttPersistenceException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (MqttException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	@Override

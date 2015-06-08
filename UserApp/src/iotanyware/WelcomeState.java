@@ -52,14 +52,16 @@ public class WelcomeState implements State {
         String initString[] =
             { "Node List",
         	  "Please select the number which wants to show detail",
-              ""};
+              "",
+              "1. Regiter Node",
+              "2. Unregister Node"};
 
         for (int i = 0; i < initString.length; i ++) {
         	view.textPane.append(initString[i] + view.newline);
         }
         
         for (int i = 0; i < str.length; i ++) {
-        	view.textPane.append((i+1) + ". " + str[i] + view.newline);
+        	view.textPane.append((i+3) + ". " + str[i] + view.newline);
         }
 		
 		view.setStatus(view.getNodeList());
