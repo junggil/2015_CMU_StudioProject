@@ -13,14 +13,25 @@ public class NodeList implements State {
 	public void enterNumber(int number) {
 		// TODO Auto-generated method stub
 		
-		view.publishMessage("testtopic/1", "test message", 0);
+		if( number > 2) { //node selection
+			view.setNodeIndex(number-3);
+			view.setStatus(view.getNodeStatus());
+		}
+		else {
+			
+		}
 	}
 
 	@Override
 	public void enterString(String string) {
 		// TODO Auto-generated method stub
 		
-		view.publishMessage("testtopic/1", string, 0);
+	}
+
+	@Override
+	public void updateState(ModelSubscribe model) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

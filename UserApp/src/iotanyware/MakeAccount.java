@@ -51,4 +51,10 @@ public class MakeAccount implements State {
 		System.out.println("TODO make account!!!");
 	}
 
+	@Override
+	public void updateState(ModelSubscribe model) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

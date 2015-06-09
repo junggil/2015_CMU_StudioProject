@@ -40,6 +40,8 @@ public class View extends JFrame implements java.util.Observer{
     private MakeAccount makeAccout;
     private NodeRegister register;
     
+    private int nodeIndex;
+    
     State state;
     
 	JTextArea textPane;
@@ -100,6 +102,14 @@ public class View extends JFrame implements java.util.Observer{
         register = new NodeRegister(this);
         
         state = welcome;
+    }
+    
+    public void setNodeIndex(int index) {
+    	nodeIndex = index;
+    }
+    
+    public int getNodeIndex() {
+    	return nodeIndex;
     }
 
     protected void initDocument() {
@@ -211,10 +221,14 @@ public class View extends JFrame implements java.util.Observer{
             me.printStackTrace();
         }
     }
-    
+        
 	@Override
 	public void update(Observable o, Object arg) {
 		// TODO Auto-generated method stub
 		System.out.println("Node Status updated!!!");
+		
+		
+		
+		state.updateState((ModelSubscribe)o);
 	}
 }

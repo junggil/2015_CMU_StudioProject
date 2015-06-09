@@ -65,6 +65,7 @@ public class Controller implements KeyListener, MqttCallback {
 		    	try {
 		    		int number = Integer.parseInt(str[lastStringIndex-1]);
 		    		view.enterNumber(number);
+		    		node.triggerViewUpdate();
 		    	} catch (NumberFormatException nfe){
 		    		System.out.println(str[lastStringIndex-1] + " is not number!");
 		    		
@@ -75,11 +76,21 @@ public class Controller implements KeyListener, MqttCallback {
 		    			} 
 		    			else {
 		    				//after login, get the node list and pass it to view by string.
-		    				view.enterString("Node#1/Node#2");
+		    				String strNodeList = "";
+		    				for(int i=0; i < node.getNodeNum(); i++) {
+		    					strNodeList += node.getNodeId(i);
+		    					strNodeList += "/";
+		    					strNodeList += node.getNodeName(i);
+		    					addSubscribeTopic(node.getNodeId(i)+"/#");
+		    					if(i+1 < node.getNodeNum())
+		    						strNodeList += "/";
+		    				}
+		    				view.enterString(strNodeList);
 		    			}
 		    		}
 		    		else {
 			    		view.enterString(str[lastStringIndex-1]);
+			    		node.triggerViewUpdate();
 		    		} //if(view.getStatus()
 		    	} //try
 	    	} //if(lastStringIndex > 0)
@@ -101,6 +112,18 @@ public class Controller implements KeyListener, MqttCallback {
 			System.out.println("Login was failed!");
 			return -1;
 		}
+		
+		//TODO node list update.
+		SANode san;		
+		san = new SANode("1111", "Simpsons", true);		
+		node.addNewNode(san);
+		san = new SANode("2222", "SmartMail", true);	
+		node.addNewNode(san);
+		
+		SensorActuator sa;
+		sa = new SensorActuator("door", "open", "default", true);
+		node.addNewSensorActuator("1111", sa);
+		
 		return initSubscriber(sid);
 	}
 	
@@ -111,14 +134,26 @@ public class Controller implements KeyListener, MqttCallback {
 			client = new MqttClient(mqttUrl, mqttId);
 			client.connect();
 			client.setCallback(this);
-			client.subscribe("testtopic/#");
-			client.subscribe("1234/#");
+			
+			//client.subscribe("1111/#");
+			//client.subscribe("2222/#");
+			
 		} catch (MqttException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return -1;
 		}
 		return 0;
+	}
+	
+	public void addSubscribeTopic(String topic) {
+		try{
+			System.out.println("addSubscribeTopic = "+topic);
+			client.subscribe(topic);			
+		} catch (MqttException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	/*
