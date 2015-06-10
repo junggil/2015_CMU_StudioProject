@@ -65,8 +65,8 @@ public class NodeControl implements State {
 		
         String initString[] =
             { "Node Control of ",
-              "If you press the 0, you can go SA node list.",
-              "If you press the 1, you can go SA node status.",
+              " If you press the 0, you can go SA node list.",
+              " If you press the 1, you can go SA node status.",
               ""};
         
         //Error Node index is over!!!
@@ -100,6 +100,6 @@ public class NodeControl implements State {
 		validStr = model.getSensorActuatorProfile(view.getNodeIndex(), view.getSaIndex());
         view.textPane.append( "Is new value  " + validStr + "?" + view.newline);
         
-        view.textPane.append("If OK, current status will be changed new one" + view.newline);
+        view.textPane.append("\nIf OK, current status will be changed new one" + view.newline);
 	}
 }
