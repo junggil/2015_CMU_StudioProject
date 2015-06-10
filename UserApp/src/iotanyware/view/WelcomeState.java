@@ -66,15 +66,15 @@ public class WelcomeState implements State {
         }
         
         // it should initialize the publisher
-        view.initPublisher("kim");
+        view.initPublisher(view.getUserName());
 
 		view.setStatus(view.getNodeList());
         
         for (int i = 0, k=3; i < str.length; i += 2, k++) {
-        	view.textPane.append((k) + ". SA Node-" + str[i+1] + view.newline);
+        	view.textPane.append((k) + ". SA Node - " + str[i+1] + view.newline);
         	
         	//for update each node status, it will pub. the query topic for each node. 
-        	view.publishMessage(str[i]+"/query", "{\"publisher\":\"kim\"}", 0);
+        	view.publishMessage(str[i]+"/query", "{\"publisher\":\"" + view.getUserName() + "\"}", 0);
         }
 		
 		//view.setStatus(view.getNodeList());

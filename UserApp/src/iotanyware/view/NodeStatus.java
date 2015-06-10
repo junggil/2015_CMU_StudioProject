@@ -14,7 +14,14 @@ public class NodeStatus implements State {
 	@Override
 	public void enterNumber(int number) {
 		// TODO Auto-generated method stub
-		
+		if( number == 0) {
+			view.setSaIndex(0);
+			view.setStatus(view.getNodeList());
+		}
+		else {
+			view.setSaIndex(number-1);
+			view.setStatus(view.getNodeControl());			
+		}
 	}
 
 	@Override
@@ -31,8 +38,20 @@ public class NodeStatus implements State {
         String initString[] =
             { "Node Status of ",
               "If you want to control node, please slect the number",
+              "If you press the 0, you can go SA node list.",
               "",
               "Current Status"};
+        
+        //Error Node index is over!!!
+        if(view.getNodeIndex() >= model.getNodeNum()) {
+            for (int i = 1; i < initString.length; i ++) {
+            	view.textPane.append(initString[i] + view.newline);
+            }
+            view.textPane.append(""+ view.newline);
+            view.textPane.append(""+ view.newline);
+        	view.textPane.append("Oops, select node is not exist!!!"+ view.newline);
+        	return;
+        }
 
         //Basin String
         view.textPane.append(initString[0] + model.getNodeName(view.getNodeIndex()) + view.newline);

@@ -7,12 +7,24 @@ import iotanyware.view.View;
 
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.net.UnknownHostException;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.json.simple.parser.ContainerFactory;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 public class Controller implements KeyListener, MqttCallback {
 
@@ -23,6 +35,8 @@ public class Controller implements KeyListener, MqttCallback {
 	
 	private MqttClient client;
 	private HTTPServerAdapter httpserver;
+	
+	private String uuid;
 
 	public void addModel(ModelSubscribe m){
 		System.out.println("Controller: adding model");
@@ -80,6 +94,7 @@ public class Controller implements KeyListener, MqttCallback {
 		    				System.out.println("Login Failed");
 		    			} 
 		    			else {
+		    				view.setMqttClientSocket(client);
 		    				//after login, get the node list and pass it to view by string.
 		    				String strNodeList = "";
 		    				for(int i=0; i < node.getNodeNum(); i++) {
@@ -118,18 +133,32 @@ public class Controller implements KeyListener, MqttCallback {
 			return -1;
 		}
 		
-		//TODO node list update.
+		//TODO node list update. and set the user name.		
 		SANode san;		
 		san = new SANode("1111", "Simpsons", true);		
 		node.addNewNode(san);
 		san = new SANode("2222", "SmartMail", true);	
 		node.addNewNode(san);
 		
-		SensorActuator sa;
-		sa = new SensorActuator("door", "open", "default", true);
-		node.addNewSensorActuator("1111", sa);
+		//TODO: userName should use id from login server.
+		view.setUserName(str[0]);
 		
-		return initSubscriber(sid);
+		//generation UUID
+		try {
+			NetworkInterface network;
+			network = NetworkInterface.getByInetAddress(InetAddress.getLocalHost());
+			byte[] mac = network.getHardwareAddress();
+			uuid = mac.toString();
+		} catch (SocketException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		System.out.println("uuid = "+ uuid);
+		return initSubscriber(uuid);
 	}
 	
 	public int initSubscriber(String sid) {
@@ -153,7 +182,7 @@ public class Controller implements KeyListener, MqttCallback {
 	
 	public void addSubscribeTopic(String topic) {
 		try{
-			System.out.println("addSubscribeTopic = "+topic);
+			System.out.println("addSubscribeTopic = " + topic);
 			client.subscribe(topic);			
 		} catch (MqttException e) {
 			// TODO Auto-generated catch block
@@ -186,13 +215,14 @@ public class Controller implements KeyListener, MqttCallback {
 	@Override
 	public void connectionLost(Throwable arg0) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("---------------------\n\nMQTT Connection Lost\n\n---------------------");
+		initSubscriber(uuid);
+		view.setMqttClientSocket(client);
 	}
 
 	@Override
 	public void deliveryComplete(IMqttDeliveryToken arg0) {
 		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
@@ -200,5 +230,67 @@ public class Controller implements KeyListener, MqttCallback {
 		// TODO Auto-generated method stub
 		System.out.println("Topic is     :" + arg0);
 		System.out.println("Contents is  :" + arg1.toString());
+		
+		String[] topicStack = arg0.split("/");
+		if( topicStack.length > 1) {
+			if(topicStack[1].matches("status")) {
+				System.out.println("SA Node(" + topicStack[0] + ") status was updated");
+				messageParse(topicStack[0], arg1.toString());
+			}
+			else if(topicStack[1].matches("notify")) {
+				System.out.println("SA Node(" + topicStack[0] + ") information arrived");
+				notificationParse(topicStack[0], arg1.toString());
+			}
+		}
+			
+	}
+	
+	
+	public void messageParse(String nodeId, String msg)	{
+		int nodeIdx = node.findNodeIndexById(nodeId);
+		System.out.println("SA Node index =" + nodeIdx);
+		if(nodeIdx < 0) {
+			System.out.println("Oops! There is no that kind of SA Node!!!");
+			return;
+		}
+		
+		JSONParser parser = new JSONParser();
+		ContainerFactory containerFactory = new ContainerFactory() {
+			public Map createObjectContainer() {
+				return new LinkedHashMap();
+			}
+			public List creatArrayContainer() {
+				return new LinkedList();
+			}
+		};
+		
+		try {
+			Map json = (Map)parser.parse(msg, containerFactory);
+			Iterator iter = json.entrySet().iterator();
+			int saIdx = -1;
+			SensorActuator sa;
+			while(iter.hasNext()) {
+				Map.Entry entry = (Map.Entry)iter.next();
+				System.out.println(entry.getKey() + " =>" + entry.getValue());
+				
+				saIdx = node.findSensorActuatorIndex((String)entry.getKey(), nodeIdx);
+				if(saIdx < 0) { //there is no that kind of SA
+					sa = new SensorActuator((String)entry.getKey(), (String)entry.getValue(), "default", false);
+					node.addNewSensorActuator(nodeIdx, sa);
+				}
+				else {
+					node.setSensorActuatorValue(nodeIdx, saIdx, (String)entry.getValue());
+				}
+			}		
+		} 
+		catch (ParseException pe) {
+			System.out.println(pe);
+		}
+		
+		node.triggerViewUpdate();		
+	}
+	
+	public void notificationParse(String nodeId, String msg) {
+		
 	}
 }

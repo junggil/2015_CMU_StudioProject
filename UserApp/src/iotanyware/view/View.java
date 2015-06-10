@@ -28,7 +28,7 @@ public class View extends JFrame implements java.util.Observer{
     
 	static final int MAX_CHARACTERS = 300;
 	
-	private String broker = "tcp://broker.mqttdashboard.com:1883";
+	//private String broker = "tcp://broker.mqttdashboard.com:1883";
 	
 	MqttClient pubClient;
     
@@ -41,6 +41,8 @@ public class View extends JFrame implements java.util.Observer{
     private NodeRegister register;
     
     private int nodeIndex;
+    private int saIndex;
+    private String username;
     
     State state;
     
@@ -58,7 +60,7 @@ public class View extends JFrame implements java.util.Observer{
         textPane.setMargin(new Insets(5,5,5,5));
         
         JScrollPane scrollPane = new JScrollPane(textPane);
-        scrollPane.setPreferredSize(new Dimension(500, 300));
+        scrollPane.setPreferredSize(new Dimension(500, 500));
         textPane.setEditable(false);
         
         Font font = new Font("Lucida Sans", Font.BOLD,  15);
@@ -104,6 +106,14 @@ public class View extends JFrame implements java.util.Observer{
         state = welcome;
     }
     
+    public void setUserName(String name) {
+    	username = name;
+    }
+    
+    public String getUserName() {
+    	return username;
+    }
+    
     public void clearInputText() {
     	changeLog.setText("");
     }
@@ -115,6 +125,14 @@ public class View extends JFrame implements java.util.Observer{
     public int getNodeIndex() {
     	return nodeIndex;
     }
+    
+    public void setSaIndex(int index) {
+    	saIndex = index;
+    }
+    
+    public int getSaIndex() {
+    	return saIndex;
+    }    
 
     protected void initDocument() {
         String initString[] =
@@ -182,8 +200,13 @@ public class View extends JFrame implements java.util.Observer{
     	return register;
     }
     
+    public void setMqttClientSocket(MqttClient client) {
+    	pubClient = client;
+    }
+    
     public void initPublisher(String clientId) {
     	//It will make as session to event bus(mqtt broker)
+    	/*
         MemoryPersistence persistence = new MemoryPersistence();
 
         try {
@@ -200,6 +223,7 @@ public class View extends JFrame implements java.util.Observer{
             System.out.println("excep  " + me);
             me.printStackTrace();
         }
+        */
     }
     
     public void publishMessage(String topic, String payload, int qos) {

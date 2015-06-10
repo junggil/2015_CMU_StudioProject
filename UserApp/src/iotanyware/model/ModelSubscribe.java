@@ -50,6 +50,15 @@ public class ModelSubscribe extends java.util.Observable {
 		}		
 	}
 	
+	public void addNewSensorActuator(int nodeIdx, SensorActuator sa) {		
+		if(nodeIdx >= nodeList.size()) {
+			return;
+		}
+		nodeList.get(nodeIdx).addSensorActuator(sa);		
+		//setChanged();
+		//notifyObservers(nodeList);
+	}
+	
 	public int getSensorActuatorNum(int index) {
 		return nodeList.get(index).getSensorAcuatorNum();
 	}
@@ -60,6 +69,10 @@ public class ModelSubscribe extends java.util.Observable {
 	
 	public String getSensorActuatorValue(int index, int saidx) {
 		return nodeList.get(index).getSaValue(saidx);
+	}
+	
+	public String getSensorActuatorProfile(int index, int saidx) {
+		return nodeList.get(index).getSaProfile(saidx);
 	}
 	
 	public boolean getSensorActuatorCanControl(int index, int saidx) {
@@ -81,5 +94,39 @@ public class ModelSubscribe extends java.util.Observable {
 	
 	public String getNodeId(int index) {
 		return nodeList.get(index).getNodeId();
+	}
+	
+	public int findNodeIndexByName(String name){
+		for(int i=0; i< nodeList.size(); i++) {
+			if(getNodeName(i).matches(name)) {
+				return i;
+			}
+		}
+		return -1;
+	}
+	
+	public int findNodeIndexById(String id) {
+		for(int i=0; i< nodeList.size(); i++) {
+			if(getNodeId(i).matches(id)) {
+				return i;
+			}
+		}
+		return -1;
+	}
+	
+	public int findSensorActuatorIndex(String name, int idx) {
+		for(int i=0; i< getSensorActuatorNum(idx); i++) {
+			if( getSensorActuatorName(idx, i).matches(name)) {
+				return i;
+			}
+		}
+		return -1;
+	}
+	
+	public void setSensorActuatorValue(int nodeIdx, int saIdx, String value) {
+		nodeList.get(nodeIdx).saList.get(saIdx).setSaValue(value);
+		
+		setChanged();
+		notifyObservers(nodeList);
 	}
 }

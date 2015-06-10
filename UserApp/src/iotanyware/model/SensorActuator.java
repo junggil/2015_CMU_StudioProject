@@ -18,6 +18,20 @@ public class SensorActuator {
 		saValue = value;
 		saProfile = profile;
 		canControl = canCtrl;
+		
+		//we assume that we already know the profile.
+		if(saName.startsWith("door")) {
+			saProfile = "open or close";
+			canControl = true;
+		}
+		else if(saName.startsWith("light")) {
+			saProfile = "on or off";
+			canControl = true;
+		}
+		else if(saName.startsWith("alarm")) {
+			saProfile = "on or off";
+			canControl = true;
+		}
 	}
 	
 	public void setSaName(String name) {

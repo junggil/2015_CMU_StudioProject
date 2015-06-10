@@ -84,6 +84,10 @@ public class SANode {
 		return saList.get(idx).getSaValue();
 	}
 	
+	public String getSaProfile(int idx) {
+		return saList.get(idx).getSaProfile();
+	}
+	
 	public boolean getSaCanControl(int idx) {
 		return saList.get(idx).getCanControl();
 	}
