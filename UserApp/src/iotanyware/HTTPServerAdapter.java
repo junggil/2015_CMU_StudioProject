@@ -70,7 +70,7 @@ public class HTTPServerAdapter implements ServerInterface{
     		
 		} catch (IOException | JSONException  e) {
 			System.out.println(e);
-			return "registerUser() failed";
+			return null;
 		}	
 	}
 
@@ -153,7 +153,7 @@ public class HTTPServerAdapter implements ServerInterface{
 	public boolean registerNode(String sessionid, String nodeid) {
 		HTTPRequest httprequest = new HTTPRequest();
 		HTTPResponse httpresponse;
-		String uri = SERVER_URL + "/session/registerNode";
+		String uri = SERVER_URL + "/user/registerNode";
 
 		HashMap<String, String> headers = new HashMap<String, String>(); 
 		HashMap<String, String> body = new HashMap<String, String>();
@@ -175,9 +175,13 @@ public class HTTPServerAdapter implements ServerInterface{
     		System.out.println(resString);
 
 			// 3. JSON parse the response
-    		JSONObject jsonObject = new JSONObject(resString);			
-    		JSONObject getSth = jsonObject.getJSONObject("result");
-    		return true; 
+    		JSONObject jresString = new JSONObject(resString);
+    		Object jstatusCode = jresString.get("statusCode");
+    		
+    		if((int)jstatusCode == 200)
+    			return true;
+    		else 
+    			return false;
     		
 		} catch (IOException | JSONException  e) {
 			System.out.println(e);
@@ -211,9 +215,13 @@ public class HTTPServerAdapter implements ServerInterface{
     		System.out.println(resString);
 
 			// 3. JSON parse the response
-    		JSONObject jsonObject = new JSONObject(resString);			
-    		JSONObject getSth = jsonObject.getJSONObject("result");
-    		return true; 
+    		JSONObject jresString = new JSONObject(resString);
+    		Object jstatusCode = jresString.get("statusCode");
+    		
+    		if((int)jstatusCode == 200)
+    			return true;
+    		else 
+    			return false;
     		
 		} catch (IOException | JSONException  e) {
 			System.out.println(e);
@@ -260,7 +268,7 @@ public class HTTPServerAdapter implements ServerInterface{
 			
 		} catch (IOException e) {
 			System.out.println(e);
-			return "viewLog() failed";
+			return null;
 		}
 	}	
 }
