@@ -37,8 +37,8 @@ public class NodeStatus implements State {
 		
         String initString[] =
             { "Node Status of ",
-              "If you want to control node, please slect the number",
-              "If you press the 0, you can go SA node list.",
+              " If you want to control node, please slect the number",
+              " If you press the 0, you can go SA node list.",
               "",
               "Current Status"};
         
@@ -70,7 +70,7 @@ public class NodeStatus implements State {
         view.textPane.append("Control, Setting, or Configure" + view.newline);
         for( int i=0, k=1; i< model.getSensorActuatorNum(view.getNodeIndex()); i++) {
         	if(model.getSensorActuatorCanControl(view.getNodeIndex(), i) ){
-        		view.textPane.append( (k) + ". " + (model.getSensorActuatorName(view.getNodeIndex(), i)).toUpperCase() + view.newline);
+        		view.textPane.append( "   " + (k) + ". " + (model.getSensorActuatorName(view.getNodeIndex(), i)).toUpperCase() + view.newline);
         		k++;
         	}
         }

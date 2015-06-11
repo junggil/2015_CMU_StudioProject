@@ -12,24 +12,16 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextPane;
-import javax.swing.text.AbstractDocument;
-import javax.swing.text.StyledDocument;
 
 import org.eclipse.paho.client.mqttv3.MqttClient;
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
-import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 
 import iotanyware.model.ModelSubscribe;
 import iotanyware.view.View;
 
 public class View extends JFrame implements java.util.Observer{
-    
-	static final int MAX_CHARACTERS = 300;
-	
-	//private String broker = "tcp://broker.mqttdashboard.com:1883";
-	
+    	
 	MqttClient pubClient;
     
     private WelcomeState welcome;
@@ -48,7 +40,6 @@ public class View extends JFrame implements java.util.Observer{
     
 	JTextArea textPane;
     JTextPane changeLog;
-    AbstractDocument doc;
     String newline = "\n";
          
     public View() {
@@ -71,15 +62,6 @@ public class View extends JFrame implements java.util.Observer{
         changeLog.setEditable(true);
         JScrollPane scrollPaneForLog = new JScrollPane(changeLog);
         changeLog.setFont(font);
-        
-        StyledDocument styledDoc = changeLog.getStyledDocument();
-        if (styledDoc instanceof AbstractDocument) {
-            doc = (AbstractDocument)styledDoc;
-            doc.setDocumentFilter(new DocumentSizeFilter(MAX_CHARACTERS));
-        } else {
-            System.err.println("Text pane's document isn't an AbstractDocument!");
-            System.exit(-1);
-        }
  
         //Create a split pane for the change log and the text area.
         JSplitPane splitPane = new JSplitPane(
@@ -144,8 +126,7 @@ public class View extends JFrame implements java.util.Observer{
  
         for (int i = 0; i < initString.length; i ++) {
         	textPane.append(initString[i] + newline);
-        }
-        
+        }        
     }
     
 	public void addController(KeyListener controller){
@@ -204,28 +185,6 @@ public class View extends JFrame implements java.util.Observer{
     	pubClient = client;
     }
     
-    public void initPublisher(String clientId) {
-    	//It will make as session to event bus(mqtt broker)
-    	/*
-        MemoryPersistence persistence = new MemoryPersistence();
-
-        try {
-        	pubClient = new MqttClient(broker, clientId, persistence);
-            MqttConnectOptions connOpts = new MqttConnectOptions();
-            connOpts.setCleanSession(true);
-            System.out.println("Connecting to broker: " + broker);
-            pubClient.connect(connOpts);            
-        } catch(MqttException me) {
-            System.out.println("reason " + me.getReasonCode());
-            System.out.println("msg    " + me.getMessage());
-            System.out.println("loc    " + me.getLocalizedMessage());
-            System.out.println("cause  " + me.getCause());
-            System.out.println("excep  " + me);
-            me.printStackTrace();
-        }
-        */
-    }
-    
     public void publishMessage(String topic, String payload, int qos) {
     	System.out.println("Publishing topic  : " + topic);
     	System.out.println("Publishing message: " + payload);
@@ -254,8 +213,6 @@ public class View extends JFrame implements java.util.Observer{
 	public void update(Observable o, Object arg) {
 		// TODO Auto-generated method stub
 		System.out.println("Node Status updated!!!");
-		
-		
 		
 		state.updateState((ModelSubscribe)o);
 	}

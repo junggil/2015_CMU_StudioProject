@@ -65,9 +65,6 @@ public class WelcomeState implements State {
         	view.textPane.append(initString[i] + view.newline);
         }
         
-        // it should initialize the publisher
-        view.initPublisher(view.getUserName());
-
 		view.setStatus(view.getNodeList());
         
         for (int i = 0, k=3; i < str.length; i += 2, k++) {
