@@ -25,7 +25,7 @@ public class HTTPServerAdapter implements ServerInterface{
 	private static final String BODY_EMAIL_KEY = "email";
 	private static final String BODY_PASSWORD_KEY = "password";
 	private static final String BODY_SESSIONID_KEY = "session";
-	private static final String BODY_NODEID_KEY = "nodeid";
+	private static final String BODY_NODEID_KEY = "nodeId";
 	private static final String BODY_NICKNAME_KEY = "nickName";	
 
 	@Override
