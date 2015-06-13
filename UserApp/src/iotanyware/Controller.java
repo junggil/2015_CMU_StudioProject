@@ -33,6 +33,8 @@ public class Controller implements KeyListener, MqttCallback {
 	ModelSubscribe node;
 	View view;
 	
+	String notifyStr = "";
+	
 	private String broker = "tcp://broker.mqttdashboard.com:1883";
 	
 	private MqttClient client;
@@ -115,7 +117,7 @@ public class Controller implements KeyListener, MqttCallback {
 		    					strNodeList += node.getNodeId(i);
 		    					strNodeList += "/";
 		    					strNodeList += node.getNodeName(i);
-		    					addSubscribeTopic(node.getNodeId(i)+"/#");
+		    					addSubscribeTopic("/sanode/"+ node.getNodeId(i)+"/#");
 		    					if(i+1 < node.getNodeNum())
 		    						strNodeList += "/";
 		    				}
@@ -252,11 +254,9 @@ public class Controller implements KeyListener, MqttCallback {
 		nodeListParse(mynode);
 		
 		//TODO node list update. and set the user name.		
-		//SANode san;		
-		//san = new SANode("0001", "Simpsons", true);		
-		//node.addNewNode(san);
-		//san = new SANode("0002", "SmartMail", true);	
-		//node.addNewNode(san);
+		SANode san;		
+		san = new SANode("0001", "Simpsons", true);		
+		node.addNewNode(san);
 		
 		//TODO: userName should use id from login server.
 		view.setUserName(sid);
@@ -334,17 +334,22 @@ public class Controller implements KeyListener, MqttCallback {
 		System.out.println("Contents is  :" + arg1.toString());
 		
 		String[] topicStack = arg0.split("/");
-		if( topicStack.length > 1) {
-			if(topicStack[1].matches("status")) {
+		
+		System.out.println("Topic 1     :" + topicStack[0]);
+		System.out.println("Topic 2     :" + topicStack[1]);
+		System.out.println("Topic 3     :" + topicStack[2]);
+		System.out.println("Topic 4     :" + topicStack[3]);
+				
+		if( topicStack.length > 3) {
+			if(topicStack[3].matches("status")) {
 				System.out.println("SA Node(" + topicStack[0] + ") status was updated");
-				messageParse(topicStack[0], arg1.toString());
+				messageParse(topicStack[2], arg1.toString());
 			}
-			else if(topicStack[1].matches("notify")) {
+			else if(topicStack[3].matches("notify")) {
 				System.out.println("SA Node(" + topicStack[0] + ") information arrived");
-				notificationParse(topicStack[0], arg1.toString());
+				notificationParse(topicStack[2], arg1.toString());
 			}
-		}
-			
+		}			
 	}
 	
 	
@@ -392,8 +397,7 @@ public class Controller implements KeyListener, MqttCallback {
 		node.triggerViewUpdate();		
 	}
 	
-	public void nodeListParse(String mynode) {		
-
+	public void nodeListParse(String mynode) {
 		try {
 			JSONParser jsonParser = new JSONParser();
 			JSONObject jsonObject = (JSONObject) jsonParser.parse(mynode);
@@ -416,6 +420,7 @@ public class Controller implements KeyListener, MqttCallback {
 	}
 	
 	public void notificationParse(String nodeId, String msg) {
-		
+		view.setStatus(view.getNotification());
+		notifyStr = nodeId + "/" + msg;
 	}
 }

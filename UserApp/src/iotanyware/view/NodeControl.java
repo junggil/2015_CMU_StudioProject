@@ -111,7 +111,7 @@ public class NodeControl implements State {
         view.textPane.append(view.newline);  
         
         //show the how to input.
-        topicId = model.getNodeId(view.getNodeIndex());
+        topicId = "/sanode/" + model.getNodeId(view.getNodeIndex());
         saName = model.getSensorActuatorName(view.getNodeIndex(), findControlTarget);
 		validStr = model.getSensorActuatorProfile(view.getNodeIndex(), findControlTarget);
         view.textPane.append( "Is new value  " + validStr + "?" + view.newline);
