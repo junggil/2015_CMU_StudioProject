@@ -25,6 +25,8 @@ public class NodeRegister implements State {
 	public void updateState(ModelSubscribe model) {
 		// TODO Auto-generated method stub
 		
+		
+		
 	}
 
 }

@@ -24,9 +24,9 @@ public class WelcomeState implements State {
                   "Please key-in like example",
                   "If you want to go back to Welcom page, please press 1",
                   "",
-                  "Input form: [id]/[password]/[email address]",
+                  "Input form: [id=email]/[password]",
                   "",
-                  "(ex) hello/123123/sam@gmail.com",
+                  "(ex) sam@gmail.com/12341234",
                   "",
                   "1. Go back Welcome page"};
  

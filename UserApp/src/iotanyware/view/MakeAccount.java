@@ -39,6 +39,7 @@ public class MakeAccount implements State {
 	@Override
 	public void enterString(String string) {
 		// TODO Auto-generated method stub
+		/*
 		String[] str = string.split("/");
 
 		if( str.length != 3) {
@@ -51,6 +52,9 @@ public class MakeAccount implements State {
 		System.out.println("======================");
 		
 		System.out.println("TODO make account!!!");
+		*/
+		
+		view.textPane.append("\n" + string );
 	}
 
 	@Override

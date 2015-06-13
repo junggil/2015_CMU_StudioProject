@@ -109,12 +109,43 @@ public class Controller implements KeyListener, MqttCallback {
 		    			}
 		    		}
 		    		else {
-			    		view.enterString(str[lastStringIndex-1]);
-			    		node.triggerViewUpdate();
+		    			
+		    			if(view.getStatus() == view.getMakeAccount()) {
+		    				//TODO - Make Account
+		    				int rtn = progressMakeAccount(str[lastStringIndex-1]);
+		    				if(rtn < 0) {
+		    					view.enterString("Failed!!!!");
+		    				}
+		    				else {
+		    					view.enterString("Success!!!");
+		    				}
+		    					
+		    			}
+		    			else {		    			
+				    		view.enterString(str[lastStringIndex-1]);
+				    		node.triggerViewUpdate();
+		    			}
 		    		} //if(view.getStatus()
 		    	} //try
 	    	} //if(lastStringIndex > 0)
 	    }//if(e.getKeyCode()
+	}
+	
+	public int progressMakeAccount(String maccount) {
+		String[] str = maccount.split("/");
+		
+		if( str.length != 2) {
+			System.out.println("Invalid input for log-in");
+			return -1;
+		}
+		
+		httpserver = new HTTPServerAdapter();
+		boolean isOk = httpserver.registerUser(str[0], str[1]);
+			
+		if(isOk){
+			return 0;
+		}
+		return -1;
 	}
 	
 	public int progressLogin(String loginStr) {
@@ -133,32 +164,21 @@ public class Controller implements KeyListener, MqttCallback {
 			return -1;
 		}
 		
+		System.out.println("session id = " + sid);
+		
+		String mynode = httpserver.getNodeList(sid);
+		System.out.println("My Node = " + mynode);
+		
 		//TODO node list update. and set the user name.		
 		SANode san;		
-		san = new SANode("1111", "Simpsons", true);		
+		san = new SANode("0001", "Simpsons", true);		
 		node.addNewNode(san);
-		san = new SANode("2222", "SmartMail", true);	
+		san = new SANode("0002", "SmartMail", true);	
 		node.addNewNode(san);
 		
 		//TODO: userName should use id from login server.
-		view.setUserName(str[0]);
-		
-		//generation UUID
-		try {
-			NetworkInterface network;
-			network = NetworkInterface.getByInetAddress(InetAddress.getLocalHost());
-			byte[] mac = network.getHardwareAddress();
-			uuid = mac.toString();
-		} catch (SocketException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		System.out.println("uuid = "+ uuid);
-		return initSubscriber(uuid);
+		view.setUserName(sid);
+		return initSubscriber(sid);
 	}
 	
 	public int initSubscriber(String sid) {
