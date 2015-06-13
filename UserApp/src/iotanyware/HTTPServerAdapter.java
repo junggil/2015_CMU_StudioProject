@@ -145,7 +145,7 @@ public class HTTPServerAdapter implements ServerInterface{
 	}
 
 	@Override
-	public boolean registerNode(String sessionid, String nodeid) {
+	public boolean registerNode(String sessionid, String nodeid, String nickName) {
 		HTTPRequest httprequest = new HTTPRequest();
 		HTTPResponse httpresponse;
 		String uri = SERVER_URL + "/user/registerNode";
@@ -161,7 +161,8 @@ public class HTTPServerAdapter implements ServerInterface{
 			headers.put(HEADER_CLIENTID_KEY, HEADER_CLIENTID_VAL);
 			
 			body.put(BODY_SESSIONID_KEY, sessionid);
-			body.put(BODY_NODEID_KEY, nodeid);			
+			body.put(BODY_NODEID_KEY, nodeid);
+			body.put(BODY_NICKNAME_KEY, nickName);	
 			
 			httpresponse = httprequest.post(uri, httprequest.propertyString(body), headers);
 
