@@ -69,17 +69,33 @@ public class NodeControl implements State {
               " If you press the 1, you can go SA node status.",
               ""};
         
+        //Find control node.
+        int controlNodeIdx = view.getSaIndex();
+        int findControlTarget = -1;
+        for(int i=0, k=-1; i<model.getSensorActuatorNum(view.getNodeIndex()); i++) {
+    		findControlTarget++;
+        	if(model.getSensorActuatorCanControl(view.getNodeIndex(), i)) {
+        		k++;
+        		if(k == controlNodeIdx) {
+        	        System.out.println("real target sa index = " + findControlTarget);
+        			break;
+        		}
+        	}
+        }
+        
+        System.out.println("real target sa index = " + findControlTarget);
+        
         //Error Node index is over!!!
-        if(view.getSaIndex() >= model.getSensorActuatorNum(view.getNodeIndex())) {
+        if(findControlTarget < 0 || findControlTarget >= model.getSensorActuatorNum(view.getNodeIndex())) {
             for (int i = 1; i < initString.length; i ++) {
             	view.textPane.append(initString[i] + view.newline);
             }
             view.textPane.append(""+ view.newline);
             view.textPane.append(""+ view.newline);
-        	view.textPane.append("Oops, select number is not valid!!!"+ view.newline);
+        	view.textPane.append("Oops, select number is not valid to control!!!"+ view.newline);
         	return;
         }
-
+        
         //Basic String
         view.textPane.append(initString[0] + model.getNodeName(view.getNodeIndex()) + view.newline);
         for (int i = 1; i < initString.length; i ++) {
@@ -88,16 +104,16 @@ public class NodeControl implements State {
         
         //Show the current status        
         view.textPane.append( "current status : " + 
-        						(model.getSensorActuatorName(view.getNodeIndex(), view.getSaIndex())) + " = " +
-        						(model.getSensorActuatorValue(view.getNodeIndex(), view.getSaIndex())) +
+        						(model.getSensorActuatorName(view.getNodeIndex(), findControlTarget)) + " = " +
+        						(model.getSensorActuatorValue(view.getNodeIndex(), findControlTarget)) +
         						view.newline);  
         
         view.textPane.append(view.newline);  
         
         //show the how to input.
         topicId = model.getNodeId(view.getNodeIndex());
-        saName = model.getSensorActuatorName(view.getNodeIndex(), view.getSaIndex());
-		validStr = model.getSensorActuatorProfile(view.getNodeIndex(), view.getSaIndex());
+        saName = model.getSensorActuatorName(view.getNodeIndex(), findControlTarget);
+		validStr = model.getSensorActuatorProfile(view.getNodeIndex(), findControlTarget);
         view.textPane.append( "Is new value  " + validStr + "?" + view.newline);
         
         view.textPane.append("\nIf OK, current status will be changed new one" + view.newline);

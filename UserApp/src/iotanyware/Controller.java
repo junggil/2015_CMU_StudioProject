@@ -153,22 +153,46 @@ public class Controller implements KeyListener, MqttCallback {
 	}
 	
 	public boolean progressRegister(String input) {
-		String[] str = input.split("/");
+		String[] str;
+		String[] newlinestr = input.split("\n");	
+
+		System.out.print("newlien num = " + newlinestr.length);
+		if(newlinestr.length > 1) {
+			str = newlinestr[1].split("/");
+		}
+		else {
+			str = input.split("/");
+		}		
 		
 		httpserver = new HTTPServerAdapter();
 		if(str.length == 1) {
 			//TODO unregister
-			return httpserver.unregisterNode(view.getUserName(), input);
-			
+			if(httpserver.unregisterNode(view.getUserName(), str[0])){
+				System.out.println("remove node sn = " + str[0]+ ".");
+				node.removeNodeById(str[0]);
+			}			
 		}
 		else if(str.length == 2){
 			//TODO register
-			return httpserver.registerNode(view.getUserName(), str[0], str[1]);
+			if(httpserver.registerNode(view.getUserName(), str[0], str[1])){
+				SANode san;		
+				san = new SANode(str[0], str[1], true);	
+				node.addNewNode(san);
+			}
 		}
 		return false;
 	}
 	public int progressMakeAccount(String maccount) {
-		String[] str = maccount.split("/");
+		String[] str;
+		String[] newlinestr = maccount.split("\n");	
+
+		System.out.print("newlien num = " + newlinestr.length);
+		if(newlinestr.length > 1) {
+			str = newlinestr[1].split("/");
+		}
+		else {
+			str = maccount.split("/");
+		}
 		
 		if( str.length != 2) {
 			System.out.println("Invalid input for log-in");
@@ -185,8 +209,16 @@ public class Controller implements KeyListener, MqttCallback {
 	}
 	
 	public int progressLogin(String loginStr) {
-		
-		String[] str = loginStr.split("/");
+		String[] str;
+		String[] newlinestr = loginStr.split("\n");	
+
+		System.out.print("newlien num = " + newlinestr.length);
+		if(newlinestr.length > 1) {
+			str = newlinestr[1].split("/");
+		}
+		else {
+			str = loginStr.split("/");
+		}
 
 		if( str.length != 2) {
 			System.out.println("Invalid input for log-in");
@@ -206,11 +238,11 @@ public class Controller implements KeyListener, MqttCallback {
 		System.out.println("My Node = " + mynode);
 		
 		//TODO node list update. and set the user name.		
-		SANode san;		
-		san = new SANode("0001", "Simpsons", true);		
-		node.addNewNode(san);
-		san = new SANode("0002", "SmartMail", true);	
-		node.addNewNode(san);
+		//SANode san;		
+		//san = new SANode("0001", "Simpsons", true);		
+		//node.addNewNode(san);
+		//san = new SANode("0002", "SmartMail", true);	
+		//node.addNewNode(san);
 		
 		//TODO: userName should use id from login server.
 		view.setUserName(sid);

@@ -66,12 +66,15 @@ public class WelcomeState implements State {
         }
         
 		view.setStatus(view.getNodeList());
-        
-        for (int i = 0, k=3; i < str.length; i += 2, k++) {
-        	view.textPane.append((k) + ". SA Node - " + str[i+1] + view.newline);
-        	
-        	//for update each node status, it will pub. the query topic for each node. 
-        	view.publishMessage(str[i]+"/query", "{\"publisher\":\"" + view.getUserName() + "\"}", 0);
+		
+		System.out.println("node num = " + str.length);
+        if(str.length > 1 ) {
+	        for (int i = 0, k=3; i < str.length; i += 2, k++) {
+	        	view.textPane.append((k) + ". SA Node - " + str[i+1] + view.newline);
+	        	
+	        	//for update each node status, it will pub. the query topic for each node. 
+	        	view.publishMessage(str[i]+"/query", "{\"publisher\":\"" + view.getUserName() + "\"}", 0);
+	        }
         }
 		
 		//view.setStatus(view.getNodeList());
