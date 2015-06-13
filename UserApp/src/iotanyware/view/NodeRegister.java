@@ -30,11 +30,11 @@ public class NodeRegister implements State {
 		view.textPane.setText("");
         String initString[] =
             { "To register new node:",
-              "Please enter the SA node ID and SA node name like",
-              "1234/MailBox",
+              "   Please enter the SA node ID and SA node name like",
+              "   ex) 1234/MailBox",
               "",
               "To unregiter the node:",
-              "Please enter the SA node ID (serial number)",
+              "   Please enter the SA node ID (serial number)",
               "",
               "If want to return Node list, please enter 0",
               ""};

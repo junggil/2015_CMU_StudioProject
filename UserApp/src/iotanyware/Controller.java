@@ -22,6 +22,8 @@ import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.json.simple.parser.ContainerFactory;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -156,7 +158,7 @@ public class Controller implements KeyListener, MqttCallback {
 		String[] str;
 		String[] newlinestr = input.split("\n");	
 
-		System.out.print("newlien num = " + newlinestr.length);
+		System.out.println("newlien num = " + newlinestr.length);
 		if(newlinestr.length > 1) {
 			str = newlinestr[1].split("/");
 		}
@@ -176,10 +178,14 @@ public class Controller implements KeyListener, MqttCallback {
 		else if(str.length == 2){
 			//TODO register
 			if( node.findNodeIndexById(str[0]) < 0 ){
+				System.out.println("Try register ID");
+			}
+			else {
 				System.out.println("ID already used!");
 				return true;
 			}
-			if(httpserver.registerNode(view.getUserName(), str[0], str[1])){
+			
+			if(httpserver.registerNode(view.getUserName(), str[0], str[1])){				
 				SANode san;		
 				san = new SANode(str[0], str[1], true);	
 				node.addNewNode(san);
@@ -242,6 +248,8 @@ public class Controller implements KeyListener, MqttCallback {
 		
 		String mynode = httpserver.getNodeList(sid);
 		System.out.println("My Node = " + mynode);
+		
+		nodeListParse(mynode);
 		
 		//TODO node list update. and set the user name.		
 		//SANode san;		
@@ -382,6 +390,29 @@ public class Controller implements KeyListener, MqttCallback {
 		}
 		
 		node.triggerViewUpdate();		
+	}
+	
+	public void nodeListParse(String mynode) {		
+
+		try {
+			JSONParser jsonParser = new JSONParser();
+			JSONObject jsonObject = (JSONObject) jsonParser.parse(mynode);
+			JSONArray  resultInfoArray = (JSONArray) jsonObject.get("result");
+			
+			for(int i=0; i<resultInfoArray.size(); i++) {
+				JSONObject nodeObj  = (JSONObject) resultInfoArray.get(i);
+				System.out.println( nodeObj.get("node") ); 		//nodeID
+				System.out.println( nodeObj.get("nickName") ); 	//nodeName
+				System.out.println( nodeObj.get("owner") ); 	//nodeOwner
+				
+				SANode san;		
+				san = new SANode((String)nodeObj.get("node"), (String)nodeObj.get("nickName"), (boolean)nodeObj.get("owner"));
+				node.addNewNode(san);
+			}
+		}
+		catch (ParseException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	public void notificationParse(String nodeId, String msg) {
