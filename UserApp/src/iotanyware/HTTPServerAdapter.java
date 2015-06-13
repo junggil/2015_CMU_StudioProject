@@ -189,7 +189,7 @@ public class HTTPServerAdapter implements ServerInterface{
 	public boolean unregisterNode(String sessionid, String nodeid) {
 		HTTPRequest httprequest = new HTTPRequest();
 		HTTPResponse httpresponse;
-		String uri = SERVER_URL + "/session/unregisterNode";
+		String uri = SERVER_URL + "/user/unregisterNode";
 
 		HashMap<String, String> headers = new HashMap<String, String>(); 
 		HashMap<String, String> body = new HashMap<String, String>();
