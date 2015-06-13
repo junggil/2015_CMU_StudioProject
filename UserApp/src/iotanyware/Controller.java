@@ -170,14 +170,20 @@ public class Controller implements KeyListener, MqttCallback {
 			if(httpserver.unregisterNode(view.getUserName(), str[0])){
 				System.out.println("remove node sn = " + str[0]+ ".");
 				node.removeNodeById(str[0]);
+				return true;
 			}			
 		}
 		else if(str.length == 2){
 			//TODO register
+			if( node.findNodeIndexById(str[0]) < 0 ){
+				System.out.println("ID already used!");
+				return true;
+			}
 			if(httpserver.registerNode(view.getUserName(), str[0], str[1])){
 				SANode san;		
 				san = new SANode(str[0], str[1], true);	
 				node.addNewNode(san);
+				return true;
 			}
 		}
 		return false;
