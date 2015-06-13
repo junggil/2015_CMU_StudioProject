@@ -24,15 +24,14 @@ public class HTTPServerAdapter implements ServerInterface{
 	private static final String HEADER_CLIENTID_VAL  = "75f9e675-9db4-4d02-b523-37521ef656ea";	
 	private static final String BODY_EMAIL_KEY = "email";
 	private static final String BODY_PASSWORD_KEY = "password";
-	private static final String BODY_NICKNAME_KEY = "nickName";
 	private static final String BODY_SESSIONID_KEY = "session";
 	private static final String BODY_NODEID_KEY = "nodeid";	
 
 	@Override
-	public String registerUser(String email, String password, String nickName) {
+	public boolean registerUser(String email, String password) {
 		HTTPRequest httprequest = new HTTPRequest();
 		HTTPResponse httpresponse;
-		String uri = SERVER_URL + "/session/createUser";
+		String uri = SERVER_URL + "/account/registerNewUser";
 
 		HashMap<String, String> headers = new HashMap<String, String>(); 
 		HashMap<String, String> body = new HashMap<String, String>();
@@ -46,7 +45,6 @@ public class HTTPServerAdapter implements ServerInterface{
 			
 			body.put(BODY_PASSWORD_KEY, password);
 			body.put(BODY_EMAIL_KEY, email);
-			body.put(BODY_NICKNAME_KEY, nickName);							
 			
 			httpresponse = httprequest.post(uri, httprequest.propertyString(body), headers);
 
@@ -58,19 +56,14 @@ public class HTTPServerAdapter implements ServerInterface{
     		JSONObject jresString = new JSONObject(resString);
     		Object jstatusCode = jresString.get("statusCode");
     		
-    		if((int)jstatusCode == 200){
-  	    		JSONObject getSth = jresString.getJSONObject("result");
-    			Object sessionid = getSth.get(BODY_SESSIONID_KEY);
-    			System.out.println(sessionid);
-    			return (String) sessionid;
-    		}
-    		else {
-    			return null;
-    		}
+    		if((int)jstatusCode == 200)
+    			return true;
+    		else 
+    			return false;
     		
 		} catch (IOException | JSONException  e) {
 			System.out.println(e);
-			return null;
+			return false;
 		}	
 	}
 

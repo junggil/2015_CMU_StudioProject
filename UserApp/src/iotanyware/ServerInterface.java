@@ -1,7 +1,7 @@
 package iotanyware;
 
 public interface ServerInterface {
-	public abstract String registerUser(String email, String password, String nickName); //after , it should return session id
+	public abstract boolean registerUser(String email, String password); //after , it should return session id
     public abstract String loginProgess(String email, String password); //after login, it should return session id
     
     public abstract String getNodeList(String sessionid);
