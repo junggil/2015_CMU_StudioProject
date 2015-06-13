@@ -83,8 +83,20 @@ public class Controller implements KeyListener, MqttCallback {
 		    	
 		    	try {
 		    		int number = Integer.parseInt(str[lastStringIndex-1]);
-		    		view.enterNumber(number);
-		    		node.triggerViewUpdate();
+		    		
+		    		if(number > 0 && view.getStatus() == view.getNodeRegister()) {
+	    				//TODO - Register / Unregister
+	    				if( progressRegister(inputString)) {
+	    					view.enterString("Success!!!");
+	    				}
+	    				else {
+	    					view.enterString("Fail!!!");
+	    				}    					
+	    			}
+		    		else {
+		    			view.enterNumber(number);
+		    			node.triggerViewUpdate();
+		    		}
 		    	} catch (NumberFormatException nfe){
 		    		System.out.println(str[lastStringIndex-1] + " is not number!");
 		    		
@@ -121,6 +133,15 @@ public class Controller implements KeyListener, MqttCallback {
 		    				}
 		    					
 		    			}
+		    			else if(view.getStatus() == view.getNodeRegister()) {
+		    				//TODO - Register / Unregister
+		    				if( progressRegister(inputString)) {
+		    					view.enterString("Success!!!");
+		    				}
+		    				else {
+		    					view.enterString("Fail!!!");
+		    				}
+		    			}
 		    			else {		    			
 				    		view.enterString(str[lastStringIndex-1]);
 				    		node.triggerViewUpdate();
@@ -131,6 +152,21 @@ public class Controller implements KeyListener, MqttCallback {
 	    }//if(e.getKeyCode()
 	}
 	
+	public boolean progressRegister(String input) {
+		String[] str = input.split("/");
+		
+		httpserver = new HTTPServerAdapter();
+		if(str.length == 1) {
+			//TODO unregister
+			return httpserver.unregisterNode(view.getUserName(), input);
+			
+		}
+		else if(str.length == 2){
+			//TODO register
+			return httpserver.registerNode(view.getUserName(), str[0], str[1]);
+		}
+		return false;
+	}
 	public int progressMakeAccount(String maccount) {
 		String[] str = maccount.split("/");
 		
