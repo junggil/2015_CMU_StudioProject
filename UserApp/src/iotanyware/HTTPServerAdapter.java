@@ -25,7 +25,8 @@ public class HTTPServerAdapter implements ServerInterface{
 	private static final String BODY_EMAIL_KEY = "email";
 	private static final String BODY_PASSWORD_KEY = "password";
 	private static final String BODY_SESSIONID_KEY = "session";
-	private static final String BODY_NODEID_KEY = "nodeid";	
+	private static final String BODY_NODEID_KEY = "nodeid";
+	private static final String BODY_NICKNAME_KEY = "nickName";	
 
 	@Override
 	public boolean registerUser(String email, String password) {
@@ -45,6 +46,7 @@ public class HTTPServerAdapter implements ServerInterface{
 			
 			body.put(BODY_PASSWORD_KEY, password);
 			body.put(BODY_EMAIL_KEY, email);
+			body.put(BODY_NICKNAME_KEY, "iot");			
 			
 			httpresponse = httprequest.post(uri, httprequest.propertyString(body), headers);
 
