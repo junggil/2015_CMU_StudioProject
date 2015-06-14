@@ -114,6 +114,14 @@ public class ModelSubscribe extends java.util.Observable {
 		return -1;
 	}
 	
+	public void removeNodeById(String id) {
+		int idx = findNodeIndexById(id);
+		if( idx < 0){
+			return;
+		}
+		nodeList.remove(idx);
+	}
+	
 	public int findSensorActuatorIndex(String name, int idx) {
 		for(int i=0; i< getSensorActuatorNum(idx); i++) {
 			if( getSensorActuatorName(idx, i).matches(name)) {

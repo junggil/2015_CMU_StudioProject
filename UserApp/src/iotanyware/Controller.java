@@ -22,6 +22,8 @@ import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.json.simple.parser.ContainerFactory;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -30,6 +32,8 @@ public class Controller implements KeyListener, MqttCallback {
 
 	ModelSubscribe node;
 	View view;
+	
+	String notifyStr = "";
 	
 	private String broker = "tcp://broker.mqttdashboard.com:1883";
 	
@@ -83,8 +87,20 @@ public class Controller implements KeyListener, MqttCallback {
 		    	
 		    	try {
 		    		int number = Integer.parseInt(str[lastStringIndex-1]);
-		    		view.enterNumber(number);
-		    		node.triggerViewUpdate();
+		    		
+		    		if(number > 0 && view.getStatus() == view.getNodeRegister()) {
+	    				//TODO - Register / Unregister
+	    				if( progressRegister(inputString)) {
+	    					view.enterString("Success!!!");
+	    				}
+	    				else {
+	    					view.enterString("Fail!!!");
+	    				}    					
+	    			}
+		    		else {
+		    			view.enterNumber(number);
+		    			node.triggerViewUpdate();
+		    		}
 		    	} catch (NumberFormatException nfe){
 		    		System.out.println(str[lastStringIndex-1] + " is not number!");
 		    		
@@ -101,7 +117,7 @@ public class Controller implements KeyListener, MqttCallback {
 		    					strNodeList += node.getNodeId(i);
 		    					strNodeList += "/";
 		    					strNodeList += node.getNodeName(i);
-		    					addSubscribeTopic(node.getNodeId(i)+"/#");
+		    					addSubscribeTopic("/sanode/"+ node.getNodeId(i)+"/#");
 		    					if(i+1 < node.getNodeNum())
 		    						strNodeList += "/";
 		    				}
@@ -109,17 +125,114 @@ public class Controller implements KeyListener, MqttCallback {
 		    			}
 		    		}
 		    		else {
-			    		view.enterString(str[lastStringIndex-1]);
-			    		node.triggerViewUpdate();
+		    			
+		    			if(view.getStatus() == view.getMakeAccount()) {
+		    				//TODO - Make Account
+		    				int rtn = progressMakeAccount(str[lastStringIndex-1]);
+		    				if(rtn < 0) {
+		    					view.enterString("Failed!!!!");
+		    				}
+		    				else {
+		    					view.enterString("Success!!!");
+		    				}
+		    					
+		    			}
+		    			else if(view.getStatus() == view.getNodeRegister()) {
+		    				//TODO - Register / Unregister
+		    				if( progressRegister(inputString)) {
+		    					view.enterString("Success!!!");
+		    				}
+		    				else {
+		    					view.enterString("Fail!!!");
+		    				}
+		    			}
+		    			else {		    			
+				    		view.enterString(str[lastStringIndex-1]);
+				    		node.triggerViewUpdate();
+		    			}
 		    		} //if(view.getStatus()
 		    	} //try
 	    	} //if(lastStringIndex > 0)
 	    }//if(e.getKeyCode()
 	}
 	
-	public int progressLogin(String loginStr) {
+	public boolean progressRegister(String input) {
+		String[] str;
+		String[] newlinestr = input.split("\n");	
+
+		System.out.println("newlien num = " + newlinestr.length);
+		if(newlinestr.length > 1) {
+			str = newlinestr[1].split("/");
+		}
+		else {
+			str = input.split("/");
+		}		
 		
-		String[] str = loginStr.split("/");
+		httpserver = new HTTPServerAdapter();
+		if(str.length == 1) {
+			//TODO unregister
+			if(httpserver.unregisterNode(view.getUserName(), str[0])){
+				System.out.println("remove node sn = " + str[0]+ ".");
+				node.removeNodeById(str[0]);
+				return true;
+			}			
+		}
+		else if(str.length == 2){
+			//TODO register
+			if( node.findNodeIndexById(str[0]) < 0 ){
+				System.out.println("Try register ID");
+			}
+			else {
+				System.out.println("ID already used!");
+				return true;
+			}
+			
+			if(httpserver.registerNode(view.getUserName(), str[0], str[1])){				
+				SANode san;		
+				san = new SANode(str[0], str[1], true);	
+				node.addNewNode(san);
+				return true;
+			}
+		}
+		return false;
+	}
+	public int progressMakeAccount(String maccount) {
+		String[] str;
+		String[] newlinestr = maccount.split("\n");	
+
+		System.out.print("newlien num = " + newlinestr.length);
+		if(newlinestr.length > 1) {
+			str = newlinestr[1].split("/");
+		}
+		else {
+			str = maccount.split("/");
+		}
+		
+		if( str.length != 2) {
+			System.out.println("Invalid input for log-in");
+			return -1;
+		}
+		
+		httpserver = new HTTPServerAdapter();
+		boolean isOk = httpserver.registerUser(str[0], str[1]);
+			
+		if(isOk){
+			return 0;
+		}
+		return -1;
+	}
+	
+	public int progressLogin(String loginStr) {
+		String[] str;
+		String[] newlinestr = loginStr.split("\n");	
+
+		System.out.print("newlien num = " + newlinestr.length);
+		if(newlinestr.length > 1) {
+			str = newlinestr[1].split("/");
+		}
+		else {
+			str = loginStr.split("/");
+		}
 
 		if( str.length != 2) {
 			System.out.println("Invalid input for log-in");
@@ -133,32 +246,21 @@ public class Controller implements KeyListener, MqttCallback {
 			return -1;
 		}
 		
+		System.out.println("session id = " + sid);
+		
+		String mynode = httpserver.getNodeList(sid);
+		System.out.println("My Node = " + mynode);
+		
+		nodeListParse(mynode);
+		
 		//TODO node list update. and set the user name.		
 		SANode san;		
-		san = new SANode("1111", "Simpsons", true);		
-		node.addNewNode(san);
-		san = new SANode("2222", "SmartMail", true);	
+		san = new SANode("0001", "Simpsons", true);		
 		node.addNewNode(san);
 		
 		//TODO: userName should use id from login server.
-		view.setUserName(str[0]);
-		
-		//generation UUID
-		try {
-			NetworkInterface network;
-			network = NetworkInterface.getByInetAddress(InetAddress.getLocalHost());
-			byte[] mac = network.getHardwareAddress();
-			uuid = mac.toString();
-		} catch (SocketException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		System.out.println("uuid = "+ uuid);
-		return initSubscriber(uuid);
+		view.setUserName(sid);
+		return initSubscriber(sid);
 	}
 	
 	public int initSubscriber(String sid) {
@@ -232,17 +334,22 @@ public class Controller implements KeyListener, MqttCallback {
 		System.out.println("Contents is  :" + arg1.toString());
 		
 		String[] topicStack = arg0.split("/");
-		if( topicStack.length > 1) {
-			if(topicStack[1].matches("status")) {
+		
+		System.out.println("Topic 1     :" + topicStack[0]);
+		System.out.println("Topic 2     :" + topicStack[1]);
+		System.out.println("Topic 3     :" + topicStack[2]);
+		System.out.println("Topic 4     :" + topicStack[3]);
+				
+		if( topicStack.length > 3) {
+			if(topicStack[3].matches("status")) {
 				System.out.println("SA Node(" + topicStack[0] + ") status was updated");
-				messageParse(topicStack[0], arg1.toString());
+				messageParse(topicStack[2], arg1.toString());
 			}
-			else if(topicStack[1].matches("notify")) {
+			else if(topicStack[3].matches("notify")) {
 				System.out.println("SA Node(" + topicStack[0] + ") information arrived");
-				notificationParse(topicStack[0], arg1.toString());
+				notificationParse(topicStack[2], arg1.toString());
 			}
-		}
-			
+		}			
 	}
 	
 	
@@ -290,7 +397,30 @@ public class Controller implements KeyListener, MqttCallback {
 		node.triggerViewUpdate();		
 	}
 	
+	public void nodeListParse(String mynode) {
+		try {
+			JSONParser jsonParser = new JSONParser();
+			JSONObject jsonObject = (JSONObject) jsonParser.parse(mynode);
+			JSONArray  resultInfoArray = (JSONArray) jsonObject.get("result");
+			
+			for(int i=0; i<resultInfoArray.size(); i++) {
+				JSONObject nodeObj  = (JSONObject) resultInfoArray.get(i);
+				System.out.println( nodeObj.get("node") ); 		//nodeID
+				System.out.println( nodeObj.get("nickName") ); 	//nodeName
+				System.out.println( nodeObj.get("owner") ); 	//nodeOwner
+				
+				SANode san;		
+				san = new SANode((String)nodeObj.get("node"), (String)nodeObj.get("nickName"), (boolean)nodeObj.get("owner"));
+				node.addNewNode(san);
+			}
+		}
+		catch (ParseException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	public void notificationParse(String nodeId, String msg) {
-		
+		view.setStatus(view.getNotification());
+		notifyStr = nodeId + "/" + msg;
 	}
 }

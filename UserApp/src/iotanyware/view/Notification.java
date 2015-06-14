@@ -15,7 +15,10 @@ public class Notification implements State {
 	@Override
 	public void enterNumber(int number) {
 		// TODO Auto-generated method stub
-		
+		if( number == 0) {
+			view.setSaIndex(0);
+			view.setStatus(view.getNodeList());
+		}
 	}
 
 	@Override
@@ -28,6 +31,9 @@ public class Notification implements State {
 	public void updateState(ModelSubscribe model) {
 		// TODO Auto-generated method stub
 		
+		view.textPane.setText("");
+		
+		view.textPane.setText("Please enter 0 to go Node List.");
 	}
 
 }

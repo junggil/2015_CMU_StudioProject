@@ -51,10 +51,11 @@ public class View extends JFrame implements java.util.Observer{
         textPane.setMargin(new Insets(5,5,5,5));
         
         JScrollPane scrollPane = new JScrollPane(textPane);
-        scrollPane.setPreferredSize(new Dimension(500, 500));
+        scrollPane.setPreferredSize(new Dimension(800, 500));
         textPane.setEditable(false);
         
-        Font font = new Font("Lucida Sans", Font.BOLD,  15);
+        //Font font = new Font("Lucida Sans", Font.BOLD,  15);
+        Font font = new Font("Consolas", Font.BOLD,  20);
         textPane.setFont(font);
  
         //Create the text area for the status log and configure it.

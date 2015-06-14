@@ -19,6 +19,9 @@ public class NodeList implements State {
 			view.setNodeIndex(number-3);
 			view.setStatus(view.getNodeStatus());
 		}
+		else if(number == 1 || number == 2){
+			view.setStatus(view.getNodeRegister());
+		}
 	}
 
 	@Override

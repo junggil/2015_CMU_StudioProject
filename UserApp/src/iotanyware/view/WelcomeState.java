@@ -24,9 +24,9 @@ public class WelcomeState implements State {
                   "Please key-in like example",
                   "If you want to go back to Welcom page, please press 1",
                   "",
-                  "Input form: [id]/[password]/[email address]",
+                  "Input form: [id=email]/[password]",
                   "",
-                  "(ex) hello/123123/sam@gmail.com",
+                  "(ex) sam@gmail.com/12341234",
                   "",
                   "1. Go back Welcome page"};
  
@@ -66,12 +66,15 @@ public class WelcomeState implements State {
         }
         
 		view.setStatus(view.getNodeList());
-        
-        for (int i = 0, k=3; i < str.length; i += 2, k++) {
-        	view.textPane.append((k) + ". SA Node - " + str[i+1] + view.newline);
-        	
-        	//for update each node status, it will pub. the query topic for each node. 
-        	view.publishMessage(str[i]+"/query", "{\"publisher\":\"" + view.getUserName() + "\"}", 0);
+		
+		System.out.println("node num = " + str.length);
+        if(str.length > 1 ) {
+	        for (int i = 0, k=3; i < str.length; i += 2, k++) {
+	        	view.textPane.append((k) + ". SA Node - " + str[i+1] + view.newline);
+	        	
+	        	//for update each node status, it will pub. the query topic for each node. 
+	        	view.publishMessage("/sanode/" + str[i] +"/query", "{\"publisher\":\"" + view.getUserName() + "\"}", 0);
+	        }
         }
 		
 		//view.setStatus(view.getNodeList());
