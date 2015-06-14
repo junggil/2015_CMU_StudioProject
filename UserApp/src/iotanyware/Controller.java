@@ -7,10 +7,8 @@ import iotanyware.view.View;
 
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.net.UnknownHostException;
+import java.io.IOException;
+import java.io.StringWriter;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -212,7 +210,7 @@ public class Controller implements KeyListener, MqttCallback {
 				node.addNewNode(san);
 				
 				addSubscribeTopic("/sanode/"+ str[0] +"/#");
-				//view.publishMessage(topic, payload, qos);
+
 				return true;
 			}
 		}

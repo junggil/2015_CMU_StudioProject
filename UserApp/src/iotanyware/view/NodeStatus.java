@@ -1,14 +1,21 @@
 package iotanyware.view;
 
+import java.io.IOException;
+import java.io.StringWriter;
+
+import org.json.simple.JSONObject;
+
 import iotanyware.model.ModelSubscribe;
 
 public class NodeStatus implements State {
 
 	View view;
+	boolean update = false;
 	
 	public NodeStatus(View view) {
 		// TODO Auto-generated constructor stub
 		this.view = view;
+		update = false;
 	}
 
 	@Override
@@ -17,6 +24,7 @@ public class NodeStatus implements State {
 		if( number == 0) {
 			view.setSaIndex(0);
 			view.setStatus(view.getNodeList());
+			update = false;
 		}
 		else {
 			view.setSaIndex(number-1);
@@ -41,6 +49,26 @@ public class NodeStatus implements State {
               " If you press the 0, you can go SA node list.",
               "",
               "Current Status"};
+        
+		if(!update){
+			String topic = "/sanode/" + model.getNodeId(view.getNodeIndex()) + "/query";
+			
+			JSONObject jsonObj = new JSONObject();
+			jsonObj.put("publisher", view.getUserName());
+			
+			StringWriter toStr = new StringWriter();
+			try {
+				jsonObj.writeJSONString(toStr);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			String payload = jsonObj.toString();
+			view.publishMessage(topic, payload, 0);
+			System.out.println("______________________________________________________________");
+		}
+		update = true;
         
         //Error Node index is over!!!
         if(view.getNodeIndex() >= model.getNodeNum()) {
