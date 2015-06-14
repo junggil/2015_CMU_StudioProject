@@ -26,12 +26,15 @@ def _hide_privates(session):
 @args.is_exists(body=['email', 'password'])
 @db_session
 def createUser():
-    payload = request.get_json()
-    if User.get(email=payload['email'], password=payload['password']):
-        session = _make_session(payload['email'], 'user')
-        db.commit()
-        return jsonify({'statusCode': 200, 'result': _hide_privates(session.to_dict())})
-    else:
+    try:
+        payload = request.get_json()
+        if User.get(email=payload['email'], password=payload['password']):
+            session = _make_session(payload['email'], 'user')
+            db.commit()
+            return jsonify({'statusCode': 200, 'result': _hide_privates(session.to_dict())})
+        else:
+            raise ValueError
+    except ValueError:
         return jsonify({'statusCode': 400, 'result': 'Invalid user information'})
 
 @app.route('/session/createNode', methods=['POST'])

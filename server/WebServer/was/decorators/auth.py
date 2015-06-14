@@ -1,4 +1,4 @@
-from flask import request, jsonify
+from flask import request, jsonify, json
 from was.models import Client, Session
 from functools import wraps
 from pony.orm import db_session

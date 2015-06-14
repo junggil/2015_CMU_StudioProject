@@ -13,8 +13,7 @@ from pony.orm.core import ObjectNotFound
 def getNodeList():
     try:
         sessionOwner = Session[request.args.get('session')].sessionOwner
-        user = User[sessionOwner]
-        res = {}
+        res = []
         for node in select(node for node in RegisteredNode if node.user.email == sessionOwner):
             node_info = node.to_dict()
             del node_info['id']
@@ -23,7 +22,7 @@ def getNodeList():
             node_info['profiles'] = []
             for sensor in select(sensor for sensor in NodeProfile if sensor.node == node.node):
                 node_info['profiles'].append({'name': sensor.name, 'profile': sensor.profile.name})
-            res[node.node.nodeId] = node_info
+            res.append(node_info)
         return jsonify({'statusCode': 200, 'result': res})
     except ObjectNotFound:
         return jsonify({'statusCode': 400, 'result': 'Invalid session'})
@@ -45,6 +44,7 @@ def registerNode():
         if old_pending_request:
             if old_pending_request.user.email == sessionOwner:
                 old_pending_request.delete()
+                db.commit()
             else:
                 return jsonify({'statusCode': 400, 'result': 'Already registed nodeId'})
 

@@ -60,7 +60,7 @@ class PendingRequestNode(db.Entity):
     nickName   = Optional(str)
 
 class UserConfiguration(db.Entity):
-    user        = Required(User)
+    user        = PrimaryKey(User)
     loggingHour = Required(int, default=72)
  
 db.generate_mapping(create_tables=True) 
