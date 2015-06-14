@@ -27,6 +27,7 @@ public class HTTPServerAdapter implements ServerInterface{
 	private static final String BODY_SESSIONID_KEY = "session";
 	private static final String BODY_NODEID_KEY = "nodeId";
 	private static final String BODY_NICKNAME_KEY = "nickName";	
+	private static final String BODY_LOGHOUR_KEY = "loggingHour";
 
 	@Override
 	public boolean registerUser(String email, String password) {
@@ -130,9 +131,6 @@ public class HTTPServerAdapter implements ServerInterface{
 			httpresponse = httprequest.get(uri /*URLEncoder.encode(uri,"UTF-8")*/, headers);
 
 			// 2.Handle HTTP response
-			System.out.println("HTTP echo test");	
-			System.out.println("Code = " + httpresponse.getResponseCode());
-			
 			String resString = URLDecoder.decode(httpresponse.getString(), "UTF-8");
 			System.out.println("String = " + resString);
 			
@@ -248,9 +246,6 @@ public class HTTPServerAdapter implements ServerInterface{
 			httpresponse = httprequest.get(uri, headers);
 
 			// 2.Handle HTTP response
-			System.out.println("HTTP echo test");	
-			System.out.println("Code = " + httpresponse.getResponseCode());
-			
 			String resString = URLDecoder.decode(httpresponse.getString(), "UTF-8");
 			System.out.println("String = " + resString);
 			
@@ -264,13 +259,79 @@ public class HTTPServerAdapter implements ServerInterface{
 
 	@Override
 	public boolean setLogConfig(String sessionid, int loggingHour) {
-		// TODO Auto-generated method stub
-		return true;
+		HTTPRequest httprequest = new HTTPRequest();
+		HTTPResponse httpresponse;
+		String uri = SERVER_URL + "/user/setConfiguration";
+
+		HashMap<String, String> headers = new HashMap<String, String>(); 
+
+		System.out.println(uri);
+		try {
+			
+			// 1.Handle HTTP request
+			headers.put(HEADER_CONTENT_KEY, HEADER_CONTENT_VAL);
+			headers.put(HEADER_CLIENTID_KEY, HEADER_CLIENTID_VAL);
+			
+			String setLogStr = 	"{\"session\":" + "\""+sessionid+"\","+
+								"\"loggingHour\":" + Integer.toString(loggingHour) +"}";
+
+			httpresponse = httprequest.put(uri, setLogStr, headers);
+
+			// 2.Handle HTTP response
+			String resString = URLDecoder.decode(httpresponse.getString(), "UTF-8");
+    		System.out.println(resString);
+
+			// 3. JSON parse the response
+    		JSONObject jresString = new JSONObject(resString);
+    		Object jstatusCode = jresString.get("statusCode");
+    		
+    		if((int)jstatusCode == 200)
+    			return true;
+    		else 
+    			return false;
+    		
+		} catch (IOException | JSONException  e) {
+			System.out.println(e);
+			return false;
+		}
 	}
 
 	@Override
 	public int getLogConfig(String sessioinid) {
-		// TODO Auto-generated method stub
-		return 10;
+		HTTPRequest httprequest = new HTTPRequest();		
+		HTTPResponse httpresponse;
+
+		HashMap<String, String> headers = new HashMap<String, String>(); 
+		String uri = SERVER_URL + "/user/getConfiguration?session=" + sessioinid;
+		
+		try {
+			// 1.Handle HTTP request
+			headers.put(HEADER_CONTENT_KEY, HEADER_CONTENT_VAL);
+			headers.put(HEADER_CLIENTID_KEY, HEADER_CLIENTID_VAL);
+			
+			System.out.println(uri);	
+			httpresponse = httprequest.get(uri, headers);
+
+			// 2.Handle HTTP response
+			String resString = URLDecoder.decode(httpresponse.getString(), "UTF-8");
+			System.out.println("String = " + resString);
+			
+			// 3. JSON parse the response
+    		JSONObject jresString = new JSONObject(resString);
+    		Object jstatusCode = jresString.get("statusCode");			
+    		
+    		if((int)jstatusCode == 200){
+  	    		JSONObject getSth = jresString.getJSONObject("result");
+    			Object loggingHour = getSth.get(BODY_LOGHOUR_KEY);
+    			System.out.println(loggingHour);
+    			return (int) loggingHour;
+    		}
+    		else {
+    			return -1;
+    		}
+		} catch (IOException | JSONException e) {
+			System.out.println(e);
+			return -1;
+		}
 	}	
 }
