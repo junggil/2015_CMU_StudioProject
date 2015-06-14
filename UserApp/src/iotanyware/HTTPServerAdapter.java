@@ -232,12 +232,6 @@ public class HTTPServerAdapter implements ServerInterface{
 	}
 
 	@Override
-	public String getNodeNames(String node) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	
-	@Override
 	public String viewLog(String sessionid) {
 	HTTPRequest httprequest = new HTTPRequest();
 		HTTPResponse httpresponse;
@@ -266,5 +260,17 @@ public class HTTPServerAdapter implements ServerInterface{
 			System.out.println(e);
 			return null;
 		}
+	}
+
+	@Override
+	public boolean setLogConfig(String sessionid, int loggingHour) {
+		// TODO Auto-generated method stub
+		return true;
+	}
+
+	@Override
+	public int getLogConfig(String sessioinid) {
+		// TODO Auto-generated method stub
+		return 10;
 	}	
 }
