@@ -31,6 +31,8 @@ public class View extends JFrame implements java.util.Observer{
     private Notification notification;
     private MakeAccount makeAccout;
     private NodeRegister register;
+    private Configure configure;
+    private LogView logview;
     
     private int nodeIndex;
     private int saIndex;
@@ -85,6 +87,8 @@ public class View extends JFrame implements java.util.Observer{
         notification = new Notification(this);
         makeAccout = new MakeAccount(this);
         register = new NodeRegister(this);
+        configure = new Configure(this);
+        logview = new LogView(this);
         
         state = welcome;
     }
@@ -153,6 +157,14 @@ public class View extends JFrame implements java.util.Observer{
 	
 	public State getStatus() {
 		return this.state;
+	}
+	
+	public State getConfigureState() {
+		return configure;
+	}
+	
+	public State getLogViewState() {
+		return logview;
 	}
 	
     public State getWelcomeState() {

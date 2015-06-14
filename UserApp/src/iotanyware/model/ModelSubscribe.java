@@ -26,11 +26,7 @@ public class ModelSubscribe extends java.util.Observable {
 		System.out.println("Model: Default Node was creasted");
 		nodeList = new ArrayList<SANode>();
 	}
-	
-	public void updateDoorStatus(String str){
-		System.out.println("Model: Door status = " + str);	
-	}
-	
+		
 	public void addNewNode(SANode e) {
 		nodeList.add(e);
 		
@@ -57,6 +53,60 @@ public class ModelSubscribe extends java.util.Observable {
 		nodeList.get(nodeIdx).addSensorActuator(sa);		
 		//setChanged();
 		//notifyObservers(nodeList);
+	}
+	
+	public boolean isAlertMsg(int idx) {
+		if(idx >= nodeList.size()) {
+			return false;
+		}
+		return nodeList.get(idx).getAlert();
+	}
+	
+	public void setIsAlertMsg(int idx, boolean b) {
+		if(idx >= nodeList.size()) {
+			return;
+		}
+		nodeList.get(idx).setAlert(b);
+	}	
+	
+	public void setIsAlertMsg(String id, boolean b) {
+		int idx = findNodeIndexById(id);
+		if(idx < 0) {
+			return;
+		}
+		nodeList.get(idx).setAlert(b);
+	}
+	
+	public String getNotificationMsg(int index) {
+		if(index < nodeList.size()) {
+			return nodeList.get(index).getNotificationMessage();
+		}
+		return null;
+	}
+	
+	public void setNotificationMsg(String str, String nid) {
+		int idx = findNodeIndexById(nid);
+		if( idx < 0) {
+			return;
+		}
+		nodeList.get(idx).setNotificationMessage(str);
+		
+		setChanged();
+		notifyObservers(nodeList);		
+	}
+	
+	public boolean hasMessage(int idx) {
+		if(idx >= nodeList.size()) {
+			return false;
+		}
+		return nodeList.get(idx).hasNotificationMessage();
+	}
+	
+	public void clearNotification(int idx) {
+		if(idx >= nodeList.size()) {
+			return;
+		}
+		nodeList.get(idx).clearNotificationMessage();
 	}
 	
 	public int getSensorActuatorNum(int index) {

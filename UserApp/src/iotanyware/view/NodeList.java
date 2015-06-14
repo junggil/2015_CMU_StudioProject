@@ -15,12 +15,18 @@ public class NodeList implements State {
 	public void enterNumber(int number) {
 		// TODO Auto-generated method stub
 		
-		if( number > 2) { //node selection
-			view.setNodeIndex(number-3);
+		if( number > 3) { //node selection
+			view.setNodeIndex(number-4);
 			view.setStatus(view.getNodeStatus());
 		}
-		else if(number == 1 || number == 2){
+		else if(number == 1) {
 			view.setStatus(view.getNodeRegister());
+		}
+		else if(number == 2) {
+			view.setStatus(view.getConfigureState());
+		}
+		else if(number == 3) {
+			view.setStatus(view.getLogViewState());
 		}
 	}
 
@@ -37,11 +43,13 @@ public class NodeList implements State {
 		
         String initString[] =
             { "Node List",
-        	  "Please select the number which wants to show detail",
-        	  "If you want to register or unregister, please select 1 or 2",
+        	  "Please select the number what you wants to",
               "",
-              "1. Regiter Node",
-              "2. Unregister Node",
+              "1. Regiter/Unregiter Node",
+              "2. Configure",
+              "3. View Log",
+              "",
+              "Please select the node number, if you show detail",
               ""};
 
         for (int i = 0; i < initString.length; i ++) {
@@ -49,7 +57,7 @@ public class NodeList implements State {
         }
         		
 		for(int i=0; i < model.getNodeNum(); i++) {
-			view.textPane.append((i+3) +". SA Node - "+ model.getNodeName(i) + view.newline);
+			view.textPane.append((i+4) +". SA Node - "+ model.getNodeName(i) + view.newline);
 		}
 	}
 }

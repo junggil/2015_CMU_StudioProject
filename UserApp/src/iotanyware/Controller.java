@@ -97,6 +97,14 @@ public class Controller implements KeyListener, MqttCallback {
 	    					view.enterString("Fail!!!");
 	    				}    					
 	    			}
+		    		else if(number == 0 && view.getStatus() == view.getNotification()){
+		    			//TODO clear alarm message
+		    			for(int i=0; i < node.getNodeNum(); i++) {
+		    				node.clearNotification(i);
+			    			view.enterNumber(number);
+			    			node.triggerViewUpdate();
+		    			}
+		    		}
 		    		else {
 		    			view.enterNumber(number);
 		    			node.triggerViewUpdate();
@@ -123,6 +131,16 @@ public class Controller implements KeyListener, MqttCallback {
 		    				}
 		    				view.enterString(strNodeList);
 		    			}
+		    		}
+		    		else if(view.getStatus() == view.getNotification()) {
+		    			if(str[lastStringIndex-1].matches("yes") || str[lastStringIndex-1].matches("no")) {
+		    				for(int i=0; i < node.getNodeNum(); i++) {
+		    					if(node.isAlertMsg(i)) {
+		    						node.clearNotification(i);
+		    					}
+		    				}
+		    			}
+		    			view.enterString(str[lastStringIndex-1]);
 		    		}
 		    		else {
 		    			
@@ -165,14 +183,15 @@ public class Controller implements KeyListener, MqttCallback {
 			str = newlinestr[1].split("/");
 		}
 		else {
-			str = input.split("/");
+			//str = input.split("/");
+			str = newlinestr[0].split("/");
 		}		
 		
 		httpserver = new HTTPServerAdapter();
 		if(str.length == 1) {
 			//TODO unregister
 			if(httpserver.unregisterNode(view.getUserName(), str[0])){
-				System.out.println("remove node sn = " + str[0]+ ".");
+				System.out.println("remove node sn = " + str[0] + ".");
 				node.removeNodeById(str[0]);
 				return true;
 			}			
@@ -191,6 +210,9 @@ public class Controller implements KeyListener, MqttCallback {
 				SANode san;		
 				san = new SANode(str[0], str[1], true);	
 				node.addNewNode(san);
+				
+				addSubscribeTopic("/sanode/"+ str[0] +"/#");
+				//view.publishMessage(topic, payload, qos);
 				return true;
 			}
 		}
@@ -254,9 +276,9 @@ public class Controller implements KeyListener, MqttCallback {
 		nodeListParse(mynode);
 		
 		//TODO node list update. and set the user name.		
-		SANode san;		
-		san = new SANode("0001", "Simpsons", true);		
-		node.addNewNode(san);
+		//SANode san;		
+		//san = new SANode("0001", "Simpsons", true);		
+		//node.addNewNode(san);
 		
 		//TODO: userName should use id from login server.
 		view.setUserName(sid);
@@ -420,7 +442,44 @@ public class Controller implements KeyListener, MqttCallback {
 	}
 	
 	public void notificationParse(String nodeId, String msg) {
+		
+		JSONParser parser = new JSONParser();
+		ContainerFactory containerFactory = new ContainerFactory() {
+			public Map createObjectContainer() {
+				return new LinkedHashMap();
+			}
+			public List creatArrayContainer() {
+				return new LinkedList();
+			}
+		};
+		
+		try {
+			Map json = (Map)parser.parse(msg, containerFactory);
+			Iterator iter = json.entrySet().iterator();
+			int saIdx = -1;
+			SensorActuator sa;
+			while(iter.hasNext()) {
+				Map.Entry entry = (Map.Entry)iter.next();
+				System.out.println(entry.getKey() + " =>" + entry.getValue());
+				
+				String string = (String)entry.getKey();
+				if(string.matches("type")) {
+					String strType = (String)entry.getValue();
+					if(strType.matches("alert")){
+						node.setIsAlertMsg(nodeId, true);
+					}
+				}
+				if(string.matches("info") || string.matches("warn")) {				
+					node.setNotificationMsg((String)entry.getValue(), nodeId);
+				}
+			}
+		}
+		catch (ParseException pe) {
+			System.out.println(pe);
+		}
+
 		view.setStatus(view.getNotification());
-		notifyStr = nodeId + "/" + msg;
+		node.triggerViewUpdate();		
+		
 	}
 }

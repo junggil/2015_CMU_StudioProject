@@ -54,11 +54,13 @@ public class WelcomeState implements State {
 		
         String initString[] =
             { "Node List",
-        	  "Please select the number which wants to show detail",
-        	  "If you want to register or unregister, please select 1 or 2",
+        	  "Please select the number what you wants to",
               "",
-              "1. Regiter Node",
-              "2. Unregister Node",
+              "1. Regiter/Unregiter Node",
+              "2. Configure",
+              "3. View Log",
+              "",
+              "Please select the node number, if you show detail",
               ""};
 
         for (int i = 0; i < initString.length; i ++) {
@@ -69,7 +71,7 @@ public class WelcomeState implements State {
 		
 		System.out.println("node num = " + str.length);
         if(str.length > 1 ) {
-	        for (int i = 0, k=3; i < str.length; i += 2, k++) {
+	        for (int i = 0, k=4; i < str.length; i += 2, k++) {
 	        	view.textPane.append((k) + ". SA Node - " + str[i+1] + view.newline);
 	        	
 	        	//for update each node status, it will pub. the query topic for each node. 

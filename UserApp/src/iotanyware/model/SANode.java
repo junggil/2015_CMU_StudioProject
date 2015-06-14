@@ -9,6 +9,10 @@ public class SANode {
 	String nodeId;
 	String nodeName;
 	
+	String displayInfo;
+	boolean hasInfo;
+	boolean isAlert;
+	
 	List<SensorActuator> saList;
 	
 	public SANode() {
@@ -16,6 +20,9 @@ public class SANode {
 		nodeId = "";
 		nodeName = "";
 		saList = new ArrayList<SensorActuator>();
+		
+		hasInfo = false;
+		isAlert = false;
 	}
 	
 	public SANode(String strid, String strname, boolean own) {
@@ -23,6 +30,35 @@ public class SANode {
 		nodeName = strname;
 		owner = own;
 		saList = new ArrayList<SensorActuator>();
+		
+		hasInfo = false;
+		isAlert = false;
+	}
+	
+	public void setNotificationMessage(String info) {
+		displayInfo = info;
+		hasInfo = true;
+	}
+	
+	public void setAlert(boolean b) {
+		isAlert = b;
+	}
+	
+	public boolean getAlert() {
+		return isAlert;
+	}
+	
+	public String getNotificationMessage() {
+		return displayInfo;
+	}
+	
+	public void clearNotificationMessage() {
+		hasInfo = false;
+		isAlert = false;
+	}
+	
+	public boolean hasNotificationMessage() {
+		return hasInfo;
 	}
 	
 	public void setOwner(boolean own) {
