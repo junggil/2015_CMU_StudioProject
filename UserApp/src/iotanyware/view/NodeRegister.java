@@ -36,7 +36,7 @@ public class NodeRegister implements State {
               "To unregiter the node:",
               "   Please enter the SA node ID (serial number)",
               "",
-              "If want to return Node list, please enter 0",
+              "0. Return Node list",
               ""};
 
         for (int i = 0; i < initString.length; i ++) {

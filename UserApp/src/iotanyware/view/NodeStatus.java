@@ -46,7 +46,7 @@ public class NodeStatus implements State {
         String initString[] =
             { "Node Status of ",
               " If you want to control node, please slect the number",
-              " If you press the 0, you can go SA node list.",
+              " 0. Go SA node list.",
               "",
               "Current Status"};
         
@@ -88,14 +88,19 @@ public class NodeStatus implements State {
         }
         
         //Node Status
-        for( int i=0; i< model.getSensorActuatorNum(view.getNodeIndex()); i++) {
-        	view.textPane.append( "   - " + model.getSensorActuatorName(view.getNodeIndex(), i) 
-        			                  + " : " + model.getSensorActuatorValue(view.getNodeIndex(), i) + view.newline);
+        if(model.getSensorActuatorNum(view.getNodeIndex()) > 0) {
+	        for( int i=0; i< model.getSensorActuatorNum(view.getNodeIndex()); i++) {
+	        	view.textPane.append( "   - " + model.getSensorActuatorName(view.getNodeIndex(), i) 
+	        			                  + " : " + model.getSensorActuatorValue(view.getNodeIndex(), i) + view.newline);
+	        }
+        }
+        else {
+        	view.textPane.append("   - It is not available.\n");
         }
         
         //Control list
         view.textPane.append("" + view.newline);
-        view.textPane.append("Control, Setting, or Configure" + view.newline);
+        view.textPane.append("Control List" + view.newline);
         for( int i=0, k=1; i< model.getSensorActuatorNum(view.getNodeIndex()); i++) {
         	if(model.getSensorActuatorCanControl(view.getNodeIndex(), i) ){
         		view.textPane.append( "   " + (k) + ". " + (model.getSensorActuatorName(view.getNodeIndex(), i)).toUpperCase() + view.newline);

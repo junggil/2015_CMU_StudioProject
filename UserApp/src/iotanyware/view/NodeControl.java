@@ -65,8 +65,8 @@ public class NodeControl implements State {
 		
         String initString[] =
             { "Node Control of ",
-              " If you press the 0, you can go SA node list.",
-              " If you press the 1, you can go SA node status.",
+              " 0. Go SA node list.",
+              " 1. Go SA node status.",
               ""};
         
         //Find control node.

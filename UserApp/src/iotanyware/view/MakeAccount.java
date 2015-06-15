@@ -22,7 +22,7 @@ public class MakeAccount implements State {
                   "Please select the number what you want to do.",
                   "",
                   "1. Login (Enter like \"id/password\")",
-                  "2. Make Account"};
+                  "2. Make Account\n"};
  
 	        for (int i = 0; i < initString.length; i ++) {
 	        	view.textPane.append(initString[i] + view.newline);
