@@ -281,6 +281,7 @@ public class Controller implements KeyListener, MqttCallback {
 		initSubscriber(sid, str[0]);
 		
 		String mynode = httpserver.getNodeList(sid);
+		System.out.println("mynode -------------------------------");
 		
 		nodeListParse(mynode);
 		

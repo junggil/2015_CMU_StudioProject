@@ -1,10 +1,5 @@
 package iotanyware.view;
 
-import java.io.IOException;
-import java.io.StringWriter;
-
-import org.json.simple.JSONObject;
-
 import iotanyware.model.ModelSubscribe;
 
 public class NodeStatus implements State {
