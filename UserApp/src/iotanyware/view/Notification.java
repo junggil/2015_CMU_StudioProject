@@ -15,9 +15,12 @@ public class Notification implements State {
 	String moreInfo;
 	String nodeId;
 	
+	boolean update;
+	
 	public Notification(View view) {
 		// TODO Auto-generated constructor stub
 		this.view = view;
+		update = false;
 	}
 
 	@Override
@@ -26,6 +29,7 @@ public class Notification implements State {
 		if( number == 0) {
 			view.setSaIndex(0);
 			view.setStatus(view.getNodeList());
+			update = false;
 		}
 	}
 
@@ -36,7 +40,7 @@ public class Notification implements State {
 			view.textPane.setText("");
 			moreInfo = "";
 			
-			view.textPane.append("0. Node List (Please enter 0 to go Node List) \n\n");
+			view.textPane.append("0. Go Node List\n\n");
 			view.textPane.append("Alarm will be enabled.\n");
 			
 			String topic = "/sanode/"+ nodeId +"/control";
@@ -61,7 +65,7 @@ public class Notification implements State {
 			view.textPane.setText("");
 			moreInfo = "";
 			
-			view.textPane.append("0. Node List (Please enter 0 to go Node List) \n\n");
+			view.textPane.append("0. Go Node List\n\n");
 			
 			String topic = "/sanode/"+ nodeId +"/control";
 			
@@ -87,10 +91,15 @@ public class Notification implements State {
 	public void updateState(ModelSubscribe model) {
 		// TODO Auto-generated method stub
 		
+		if(update) {
+			update = true;
+			return;
+		}
+		
 		view.textPane.setText("");
 		moreInfo = "";
 		
-		view.textPane.append("0. Node List (Please enter 0 to go Node List) \n\n");
+		view.textPane.append("0. Go Node List\n\n");
 		
 		for( int i=0; i < model.getNodeNum(); i++ ) {
 			if(model.hasMessage(i)) {

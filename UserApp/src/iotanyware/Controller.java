@@ -89,7 +89,7 @@ public class Controller implements KeyListener, MqttCallback {
 		    		if(number > 0 && view.getStatus() == view.getNodeRegister()) {
 	    				//TODO - Register / Unregister
 	    				if( progressRegister(inputString)) {
-	    					view.enterString("Success!!!");
+	    					view.enterString("");
 	    				}
 	    				else {
 	    					view.enterString("Fail!!!");
@@ -114,6 +114,7 @@ public class Controller implements KeyListener, MqttCallback {
 		    		if(view.getStatus() == view.getWelcomeState()) {
 		    			if(progressLogin(str[lastStringIndex-1]) < 0) {
 		    				System.out.println("Login Failed");
+		    				view.addText("Fail!!!");
 		    			} 
 		    			else {
 		    				view.setMqttClientSocket(client);
@@ -122,8 +123,9 @@ public class Controller implements KeyListener, MqttCallback {
 		    				for(int i=0; i < node.getNodeNum(); i++) {
 		    					strNodeList += node.getNodeId(i);
 		    					strNodeList += "/";
-		    					strNodeList += node.getNodeName(i);
-		    					addSubscribeTopic("/sanode/"+ node.getNodeId(i)+"/#");
+		    					strNodeList += node.getNodeName(i);		    					
+		    					//addSubscribeTopic("/sanode/"+ node.getNodeId(i) +"/status");
+		    					//addSubscribeTopic("/sanode/"+ node.getNodeId(i) +"/notify");		    					
 		    					if(i+1 < node.getNodeNum())
 		    						strNodeList += "/";
 		    				}
@@ -140,8 +142,7 @@ public class Controller implements KeyListener, MqttCallback {
 		    			}
 		    			view.enterString(str[lastStringIndex-1]);
 		    		}
-		    		else {
-		    			
+		    		else {		    			
 		    			if(view.getStatus() == view.getMakeAccount()) {
 		    				//TODO - Make Account
 		    				int rtn = progressMakeAccount(str[lastStringIndex-1]);
@@ -156,7 +157,7 @@ public class Controller implements KeyListener, MqttCallback {
 		    			else if(view.getStatus() == view.getNodeRegister()) {
 		    				//TODO - Register / Unregister
 		    				if( progressRegister(inputString)) {
-		    					view.enterString("Success!!!");
+		    					view.enterString("");
 		    				}
 		    				else {
 		    					view.enterString("Fail!!!");
@@ -181,8 +182,7 @@ public class Controller implements KeyListener, MqttCallback {
 			str = newlinestr[1].split("/");
 		}
 		else {
-			//str = input.split("/");
-			str = newlinestr[0].split("/");
+			str = newlinestr[0].split("/"); //input.split("/");
 		}		
 		
 		httpserver = new HTTPServerAdapter();
@@ -191,6 +191,7 @@ public class Controller implements KeyListener, MqttCallback {
 			if(httpserver.unregisterNode(view.getUserName(), str[0])){
 				System.out.println("remove node sn = " + str[0] + ".");
 				node.removeNodeById(str[0]);
+				view.addText("Success!!!\n");
 				return true;
 			}			
 		}
@@ -201,16 +202,12 @@ public class Controller implements KeyListener, MqttCallback {
 			}
 			else {
 				System.out.println("ID already used!");
+				view.addText("Already used one!");
 				return true;
 			}
 			
-			if(httpserver.registerNode(view.getUserName(), str[0], str[1])){				
-				SANode san;		
-				san = new SANode(str[0], str[1], true);	
-				node.addNewNode(san);
-				
-				addSubscribeTopic("/sanode/"+ str[0] +"/#");
-
+			if(httpserver.registerNode(view.getUserName(), str[0], str[1])){
+				view.addText("Please turn on the SA node, or Press the Button\n");
 				return true;
 			}
 		}
@@ -263,36 +260,32 @@ public class Controller implements KeyListener, MqttCallback {
 		String sid = httpserver.loginProgess(str[0], str[1]);
 		if( sid == null ) {
 			System.out.println("Login was failed!");
+			view.addText("Fail!!!");
 			return -1;
 		}
 		
 		System.out.println("session id = " + sid);
 		
+		view.setUserName(sid);
+		initSubscriber(sid, str[0]);
+		
 		String mynode = httpserver.getNodeList(sid);
-		System.out.println("My Node = " + mynode);
 		
 		nodeListParse(mynode);
 		
-		//TODO node list update. and set the user name.		
-		//SANode san;		
-		//san = new SANode("0001", "Simpsons", true);		
-		//node.addNewNode(san);
-		
-		//TODO: userName should use id from login server.
-		view.setUserName(sid);
-		return initSubscriber(sid);
+		return 0;
 	}
 	
-	public int initSubscriber(String sid) {
+	public int initSubscriber(String sid, String uid) {
 		try {
 			String mqttUrl = broker;
 			String mqttId  = sid;
 			client = new MqttClient(mqttUrl, mqttId);
 			client.connect();
 			client.setCallback(this);
-			
-			//client.subscribe("1111/#");
-			//client.subscribe("2222/#");
+
+			client.subscribe("/user/" + uid + "/register");
+			client.subscribe("/user/" + uid + "/heartbeat");
 			
 		} catch (MqttException e) {
 			// TODO Auto-generated catch block
@@ -311,35 +304,11 @@ public class Controller implements KeyListener, MqttCallback {
 			e.printStackTrace();
 		}
 	}
-	
-	/*
-	public void pubMessage(String topic, String payload) {
-		if(client == null) {
-			System.out.println("It is not connected to event bus!!!");
-			return;
-		}
-		
-		MqttMessage message = new MqttMessage();
-		
-		message.setPayload(payload.getBytes());
-		try {
-			client.publish(topic, message);
-		} catch (MqttPersistenceException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (MqttException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-	*/
 
 	@Override
 	public void connectionLost(Throwable arg0) {
 		// TODO Auto-generated method stub
 		System.out.println("---------------------\n\nMQTT Connection Lost\n\n---------------------");
-		initSubscriber(uuid);
-		view.setMqttClientSocket(client);
 	}
 
 	@Override
@@ -369,9 +338,58 @@ public class Controller implements KeyListener, MqttCallback {
 				System.out.println("SA Node(" + topicStack[0] + ") information arrived");
 				notificationParse(topicStack[2], arg1.toString());
 			}
+			else if(topicStack[3].matches("heartbeat")) {
+				progressHeartbeat(arg1.toString());
+			}
+			else if(topicStack[3].matches("register")) {
+				progressRegisterNotify(arg1.toString());
+			}
 		}			
 	}
 	
+	public void progressRegisterNotify(String jsonmsg) {
+		try {
+			JSONParser jsonParser = new JSONParser();
+			JSONObject jsonObject = (JSONObject) jsonParser.parse(jsonmsg);
+			System.out.println( jsonObject.get("node") ); 		//nodeID
+			System.out.println( jsonObject.get("nickName") ); 	//nodeName
+			System.out.println( jsonObject.get("owner") ); 		//nodeOwner
+			
+			SANode san;		
+			san = new SANode((String)jsonObject.get("node"), (String)jsonObject.get("nickName"), (boolean)jsonObject.get("owner"));	
+			node.addNewNode(san);
+			
+			addSubscribeTopic("/sanode/"+ jsonObject.get("node") +"/status");
+			addSubscribeTopic("/sanode/"+ jsonObject.get("node") +"/notify");
+			
+			if(view.getStatus() == view.getNodeRegister()) {
+				view.addText("\nSA Node Registeration Success!!!\n");
+			}
+		}
+		catch (ParseException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void progressHeartbeat(String jsonmsg) {
+		try {
+			JSONParser jsonParser = new JSONParser();
+			JSONObject jsonObject = (JSONObject) jsonParser.parse(jsonmsg);
+			System.out.println( jsonObject.get("node") ); 		//nodeID
+			System.out.println( jsonObject.get("nickName") ); 	//nodeName
+			System.out.println( jsonObject.get("status") ); 	//nodeName
+			
+			int nodeIdx = node.findNodeIndexById((String)jsonObject.get("node"));
+			int saNum = node.getSensorActuatorNum(nodeIdx);
+			for( ; saNum > 0; saNum--) {
+				//TODO remove node list
+				node.removeSensorActuator(nodeIdx, saNum-1);
+			}			
+		}
+		catch (ParseException e) {
+			e.printStackTrace();
+		}		
+	}
 	
 	public void messageParse(String nodeId, String msg)	{
 		int nodeIdx = node.findNodeIndexById(nodeId);
@@ -432,6 +450,9 @@ public class Controller implements KeyListener, MqttCallback {
 				SANode san;		
 				san = new SANode((String)nodeObj.get("node"), (String)nodeObj.get("nickName"), (boolean)nodeObj.get("owner"));
 				node.addNewNode(san);
+				
+				addSubscribeTopic("/sanode/"+ nodeObj.get("node") +"/status");
+				addSubscribeTopic("/sanode/"+ nodeObj.get("node") +"/notify");
 			}
 		}
 		catch (ParseException e) {

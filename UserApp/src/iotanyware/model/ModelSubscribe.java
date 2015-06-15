@@ -129,6 +129,10 @@ public class ModelSubscribe extends java.util.Observable {
 		return nodeList.get(index).getSaCanControl(saidx);
 	}
 	
+	public void removeSensorActuator(int index, int saidx) {
+		nodeList.get(index).removeSensorActuator(saidx);
+	}
+	
 	public void triggerViewUpdate() {
 		setChanged();
 		notifyObservers(nodeList);

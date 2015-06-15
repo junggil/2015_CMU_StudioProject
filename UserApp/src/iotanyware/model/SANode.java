@@ -112,6 +112,14 @@ public class SANode {
 		return saList.size();
 	}
 	
+	public void removeSensorActuator(int idx) {
+		if(idx >= saList.size()) {
+			System.out.println("========================= ERR: index over: " + idx);
+			return;
+		}
+		saList.remove(idx);
+	}
+	
 	public String getSaName(int idx) {
 		return saList.get(idx).getSaName();
 	}

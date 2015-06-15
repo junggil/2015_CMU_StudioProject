@@ -127,7 +127,7 @@ public class View extends JFrame implements java.util.Observer{
                   "Please select the number what you want to do.",
                   "",
                   "1. Login (Enter like \"id/password\")",
-                  "2. Make Account"};
+                  "2. Make Account\n"};
  
         for (int i = 0; i < initString.length; i ++) {
         	textPane.append(initString[i] + newline);
@@ -196,6 +196,10 @@ public class View extends JFrame implements java.util.Observer{
     
     public void setMqttClientSocket(MqttClient client) {
     	pubClient = client;
+    }
+    
+    public void addText(String str) {
+    	textPane.append(str + newline);
     }
     
     public void publishMessage(String topic, String payload, int qos) {

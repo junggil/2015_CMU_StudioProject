@@ -23,10 +23,10 @@ public class Configure implements State {
 		else {
 			HTTPServerAdapter httpServer = new HTTPServerAdapter();
 			if(httpServer.setLogConfig(view.getUserName(), number))	{
-				view.textPane.setText("Configuration");
-				view.textPane.append("\n0. Node List (Please enter 0 to go Node List) \n\n");
+				view.textPane.setText("Configuration\n\n");
 				view.textPane.append(" Current config time for logging is " + number + "hr\n");
-				view.textPane.append(" What is your new config time?");			
+				view.textPane.append(" What is your new config time?");	
+				view.textPane.append("\n\n0. Go Node List\n\n");		
 			}
 			
 		}
@@ -46,13 +46,13 @@ public class Configure implements State {
 		}
 		update = true;	
 		
-		view.textPane.setText("Configuration");
-		view.textPane.append("\n0. Node List (Please enter 0 to go Node List) \n\n");
+		view.textPane.setText("Configuration\n\n");
 		HTTPServerAdapter httpServer = new HTTPServerAdapter();
 		int curTime = httpServer.getLogConfig(view.getUserName());
 		if(curTime > 0) {
 			view.textPane.append(" Current config time for logging is " + curTime + "hr\n");
 		}
 		view.textPane.append(" What is your new config time?");
+		view.textPane.append("\n\n0. Go Node List\n\n");
 	}
 }
