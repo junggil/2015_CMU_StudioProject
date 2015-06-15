@@ -21,7 +21,7 @@ public class Configure implements State {
 			update = false;
 		}
 		else {
-			HTTPServerAdapter httpServer = new HTTPServerAdapter();
+			HTTPServerAdapter httpServer = HTTPServerAdapter.getInstance();
 			if(httpServer.setLogConfig(view.getUserName(), number))	{
 				view.textPane.setText("Configuration\n\n");
 				view.textPane.append(" Current config time for logging is " + number + "hr\n");
@@ -47,7 +47,7 @@ public class Configure implements State {
 		update = true;	
 		
 		view.textPane.setText("Configuration\n\n");
-		HTTPServerAdapter httpServer = new HTTPServerAdapter();
+		HTTPServerAdapter httpServer = HTTPServerAdapter.getInstance();
 		int curTime = httpServer.getLogConfig(view.getUserName());
 		if(curTime > 0) {
 			view.textPane.append(" Current config time for logging is " + curTime + "hr\n");

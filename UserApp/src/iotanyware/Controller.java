@@ -185,7 +185,7 @@ public class Controller implements KeyListener, MqttCallback {
 			str = newlinestr[0].split("/"); //input.split("/");
 		}		
 		
-		httpserver = new HTTPServerAdapter();
+		httpserver = HTTPServerAdapter.getInstance();
 		if(str.length == 1) {
 			//TODO unregister
 			if(httpserver.unregisterNode(view.getUserName(), str[0])){
@@ -240,7 +240,7 @@ public class Controller implements KeyListener, MqttCallback {
 			return -1;
 		}
 		
-		httpserver = new HTTPServerAdapter();
+		httpserver = HTTPServerAdapter.getInstance();
 		boolean isOk = httpserver.registerUser(str[0], str[1]);
 			
 		if(isOk){
@@ -252,6 +252,7 @@ public class Controller implements KeyListener, MqttCallback {
 	public int progressLogin(String loginStr) {
 		String[] str;
 		String[] newlinestr = loginStr.split("\n");	
+
 
 		System.out.print("newlien num = " + newlinestr.length);
 		if(newlinestr.length > 1) {
@@ -265,8 +266,10 @@ public class Controller implements KeyListener, MqttCallback {
 			System.out.println("Invalid input for log-in");
 			return -1;
 		}
-		
-		httpserver = new HTTPServerAdapter();
+//int i=0;
+//while(i++!=100)
+//{
+		httpserver = HTTPServerAdapter.getInstance();
 		String sid = httpserver.loginProgess(str[0], str[1]);
 		if( sid == null ) {
 			System.out.println("Login was failed!");
@@ -284,7 +287,7 @@ public class Controller implements KeyListener, MqttCallback {
 		System.out.println("mynode -------------------------------");
 		
 		nodeListParse(mynode);
-		
+//}		
 		return 0;
 	}
 	

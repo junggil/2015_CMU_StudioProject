@@ -16,6 +16,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 public class HTTPServerAdapter implements ServerInterface{
+	
+	private static HTTPServerAdapter SingleInstance = null;	
 
 	private static final String SERVER_URL = "http://54.166.26.101:8000";
 	private static final String HEADER_CONTENT_KEY  = "Content-Type";
@@ -29,9 +31,19 @@ public class HTTPServerAdapter implements ServerInterface{
 	private static final String BODY_NICKNAME_KEY = "nickName";	
 	private static final String BODY_LOGHOUR_KEY = "loggingHour";
 
+	protected HTTPServerAdapter() {
+	}
+	
+	public static HTTPServerAdapter getInstance() {
+		if(SingleInstance == null) {
+			SingleInstance = new HTTPServerAdapter();
+		}
+		return SingleInstance;
+	}		
+	
 	@Override
 	public boolean registerUser(String email, String password) {
-		HTTPRequest httprequest = new HTTPRequest();
+		HTTPRequest httprequest = HTTPRequest.getInstance();
 		HTTPResponse httpresponse;
 		String uri = SERVER_URL + "/account/registerNewUser";
 
@@ -72,7 +84,7 @@ public class HTTPServerAdapter implements ServerInterface{
 
 	@Override
 	public String loginProgess(String email, String password) {
-		HTTPRequest httprequest = new HTTPRequest();
+		HTTPRequest httprequest = HTTPRequest.getInstance();
 		HTTPResponse httpresponse;
 		String uri = SERVER_URL + "/session/createUser";
 
@@ -92,17 +104,21 @@ public class HTTPServerAdapter implements ServerInterface{
 			httpresponse = httprequest.post(uri, httprequest.propertyString(body), headers);
 
 			// 2.Handle HTTP response
-			String resString = URLDecoder.decode(httpresponse.getString(), "UTF-8");
-    		System.out.println(resString);
+			String resString = httpresponse.getString();
+			System.out.println("1."+ resString);
+			
+			String resStringUTF8 = URLDecoder.decode(resString, "UTF-8");
+    		System.out.println("2."+ resStringUTF8);
 
 			// 3. JSON parse the response
-    		JSONObject jresString = new JSONObject(resString);
+    		JSONObject jresString = new JSONObject(resStringUTF8);
     		Object jstatusCode = jresString.get("statusCode");
     		
     		if((int)jstatusCode == 200){
   	    		JSONObject getSth = jresString.getJSONObject("result");
     			Object sessionid = getSth.get(BODY_SESSIONID_KEY);
     			System.out.println(sessionid);
+
     			return (String) sessionid;
     		}
     		else {
@@ -115,7 +131,7 @@ public class HTTPServerAdapter implements ServerInterface{
 	}
 
 	public String getNodeList(String sessionid) {
-		HTTPRequest httprequest = new HTTPRequest();
+		HTTPRequest httprequest = HTTPRequest.getInstance();
 		HTTPResponse httpresponse;
 
 		HashMap<String, String> headers = new HashMap<String, String>(); 
@@ -131,10 +147,13 @@ public class HTTPServerAdapter implements ServerInterface{
 			httpresponse = httprequest.get(uri /*URLEncoder.encode(uri,"UTF-8")*/, headers);
 
 			// 2.Handle HTTP response
-			String resString = URLDecoder.decode(httpresponse.getString(), "UTF-8");
-			System.out.println("String = " + resString);
+			String resString = httpresponse.getString();
+			System.out.println("1."+ resString);
 			
-			return (String) resString;
+			String resStringUTF8 = URLDecoder.decode(resString, "UTF-8");
+    		System.out.println("2."+ resStringUTF8);
+			
+			return (String) resStringUTF8;
 			
 		} catch (IOException e) {
 			System.out.println(e);
@@ -144,7 +163,7 @@ public class HTTPServerAdapter implements ServerInterface{
 
 	@Override
 	public boolean registerNode(String sessionid, String nodeid, String nickName) {
-		HTTPRequest httprequest = new HTTPRequest();
+		HTTPRequest httprequest = HTTPRequest.getInstance();
 		HTTPResponse httpresponse;
 		String uri = SERVER_URL + "/user/registerNode";
 
@@ -185,7 +204,7 @@ public class HTTPServerAdapter implements ServerInterface{
 
 	@Override
 	public boolean unregisterNode(String sessionid, String nodeid) {
-		HTTPRequest httprequest = new HTTPRequest();
+		HTTPRequest httprequest = HTTPRequest.getInstance();
 		HTTPResponse httpresponse;
 		String uri = SERVER_URL + "/user/unregisterNode";
 
@@ -231,7 +250,7 @@ public class HTTPServerAdapter implements ServerInterface{
 
 	@Override
 	public String viewLog(String sessionid) {
-	HTTPRequest httprequest = new HTTPRequest();
+		HTTPRequest httprequest = HTTPRequest.getInstance();
 		HTTPResponse httpresponse;
 
 		HashMap<String, String> headers = new HashMap<String, String>(); 
@@ -259,7 +278,7 @@ public class HTTPServerAdapter implements ServerInterface{
 
 	@Override
 	public boolean setLogConfig(String sessionid, int loggingHour) {
-		HTTPRequest httprequest = new HTTPRequest();
+		HTTPRequest httprequest = HTTPRequest.getInstance();
 		HTTPResponse httpresponse;
 		String uri = SERVER_URL + "/user/setConfiguration";
 
@@ -298,7 +317,7 @@ public class HTTPServerAdapter implements ServerInterface{
 
 	@Override
 	public int getLogConfig(String sessioinid) {
-		HTTPRequest httprequest = new HTTPRequest();		
+		HTTPRequest httprequest = HTTPRequest.getInstance();	
 		HTTPResponse httpresponse;
 
 		HashMap<String, String> headers = new HashMap<String, String>(); 
