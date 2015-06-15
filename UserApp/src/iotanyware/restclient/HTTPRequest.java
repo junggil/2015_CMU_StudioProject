@@ -209,7 +209,7 @@ public class HTTPRequest {
 				propstr = propstr + ",";
 			}
 		}
-		System.out.println(propstr);
+		//System.out.println(propstr);
 		return propstr + "}";
 	}
 }
