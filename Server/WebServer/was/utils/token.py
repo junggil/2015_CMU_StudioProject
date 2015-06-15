@@ -12,3 +12,9 @@ def model_unique_id(model, length=16):
             model[new_id]
     except ObjectNotFound:
         return new_id
+
+def generateOtp(cmp, length=24):
+    while True:
+        otp = generateKey(length)
+        if not cmp(otp):
+            return otp

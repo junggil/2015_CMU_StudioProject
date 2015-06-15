@@ -62,5 +62,15 @@ class PendingRequestNode(db.Entity):
 class UserConfiguration(db.Entity):
     user        = PrimaryKey(User)
     loggingHour = Required(int, default=72)
+
+class PendingRequestUser(db.Entity):
+    email        = PrimaryKey(str, py_check=lambda val:re.match(r'[^@]+@[^@]+\.[^@]+', val))
+    createDate   = Required(datetime, default=datetime.now)
+    endDate      = Required(datetime, default=lambda: datetime.now() + timedelta(hours=1))
+    nickName     = Required(str)
+    password     = Required(str)
+    otpToken     = Required(str)
+    mobileNumber = Optional(str, nullable=True)
+    profileImage = Optional(str, nullable=True)
  
 db.generate_mapping(create_tables=True) 

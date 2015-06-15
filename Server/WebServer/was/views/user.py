@@ -111,7 +111,6 @@ def transferOwner():
 def getConfiguration():
     sessionOwner = Session[request.args.get('session')].sessionOwner
     config = UserConfiguration.get(user=sessionOwner).to_dict()
-    del config['id']
     del config['user']
     return jsonify({'statusCode': 200, 'result': config})
 

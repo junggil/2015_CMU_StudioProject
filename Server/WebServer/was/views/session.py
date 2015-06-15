@@ -1,17 +1,19 @@
-from was import app, db, utils
+from was import app, db
 from was.models import *
+from was.utils import token
 from was.decorators import args, auth
 from uuid import uuid4
-from flask import request, jsonify
+from flask import request, jsonify, json
 from pony.orm import db_session, core, select
 from datetime import datetime, timedelta
+import paho.mqtt.publish as publish
 
 def _make_session(sessionOwner, sessionType):
     old_session = Session.get(lambda s:s.sessionOwner == sessionOwner)
     if old_session:
         old_session.delete()
 
-    return Session(session = utils.model_unique_id(Session),
+    return Session(session = token.model_unique_id(Session),
                    refreshToken = str(uuid4()), sessionType = sessionType, 
                    sessionOwner = sessionOwner)
 
@@ -42,15 +44,22 @@ def createUser():
 @args.is_exists(body=['nodeId'])
 @db_session
 def createNode():
-    pendingNode = PendingRequestNode.get(nodeId = request.get_json()['nodeId'])
-    if not pendingNode or pendingNode.endDate < datetime.now():
+    nodeId = request.get_json()['nodeId']
+    registeredNode = Node.get(nodeId=nodeId)
+    pendingNode = PendingRequestNode.get(nodeId = nodeId)
+    if not registeredNode and (not pendingNode or pendingNode.endDate < datetime.now()):
         return jsonify({'statusCode': 400, 'result': 'Unregisterd nodeId'})
     else:
-        Node(nodeId = pendingNode.nodeId)
-        session = _make_session(pendingNode.nodeId, 'node')
-        RegisteredNode(owner = True, nickName = pendingNode.nickName, user = pendingNode.user, node = pendingNode.nodeId)
-        pendingNode.delete()
-        db.commit()
+        if pendingNode:
+            Node(nodeId = pendingNode.nodeId)
+            session = _make_session(pendingNode.nodeId, 'node')
+            RegisteredNode(owner = True, nickName = pendingNode.nickName, user = pendingNode.user, node = pendingNode.nodeId)
+            publish.single('/user/%s/register' % pendingNode.user.email, json.dumps({'node': pendingNode.nodeId, 
+                            'nickName': pendingNode.nickName, 'owner': True}), hostname='broker.mqttdashboard.com')
+            pendingNode.delete()
+            db.commit()
+        else:
+            session = Session.get(sessionType='node', sessionOwner=nodeId, enabled=True)
         return jsonify({'statusCode': 200, 'result': _hide_privates(session.to_dict())})
 
 @app.route('/session/refresh', methods=['POST'])

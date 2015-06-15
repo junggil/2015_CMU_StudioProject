@@ -12,7 +12,7 @@ def search_db(userId, collection = 'sanode'):
     db = MongoClient()['iot-anyware']
     loggingHour = UserConfiguration[userId].loggingHour
     registeredNode = [reg.node.nodeId for reg in select(reg for reg in RegisteredNode \
-                                      if reg.user.email == 'simpson.homer@gmail.com')]
+                                      if reg.user.email == userId)]
     for post in db[collection].find({'timestamp': {'$gte': datetime.now() - timedelta(hours=loggingHour), '$lt': datetime.now()},
                                      'node': {'$in': registeredNode}}):
         val = dict(post)
