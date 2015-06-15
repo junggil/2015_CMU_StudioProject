@@ -72,11 +72,13 @@ public class Controller implements KeyListener, MqttCallback {
 		if(e.getKeyCode() == KeyEvent.VK_ENTER) {
 			System.out.println("Enter Key!!!!!");
 			
-			String inputString = view.getInputString();
-			
-			if(view != null){
-				view.clearInputText();
+			if(view == null) {
+				return;
 			}
+			
+			String inputString = view.getInputString();
+						
+			view.clearInputText();
 			
 			String[] str = inputString.split("\n");
 	    	int lastStringIndex = str.length;

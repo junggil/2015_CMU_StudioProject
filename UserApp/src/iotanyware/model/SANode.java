@@ -99,7 +99,8 @@ public class SANode {
 		
 		//may be saValue is not synchronous on real time
 		for( int i = 0; i < saList.size(); i++) {
-			if(sa.getSaName() == saList.get(i).saName) {
+			//if(sa.getSaName() == saList.get(i).saName) {
+			if( sa.getSaName().matches(saList.get(i).saName)) {
 				index = i;
 				break;
 			}

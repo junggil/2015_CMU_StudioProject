@@ -36,7 +36,7 @@ public class ModelSubscribe extends java.util.Observable {
 	
 	public void addNewSensorActuator(String nodeId, SensorActuator sa) {
 		for(int i=0; i < nodeList.size(); i++) {
-			if(nodeList.get(i).getNodeId() == nodeId) {
+			if(nodeList.get(i).getNodeId().matches(nodeId)) {
 				System.out.println("new Sensor or Actuator was added to SANode: " + nodeId);
 				nodeList.get(i).addSensorActuator(sa);
 				
