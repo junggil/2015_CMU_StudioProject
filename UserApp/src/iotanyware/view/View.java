@@ -37,6 +37,7 @@ public class View extends JFrame implements java.util.Observer{
     private int nodeIndex;
     private int saIndex;
     private String username;
+    private String userEmail;
     
     State state;
     
@@ -232,5 +233,13 @@ public class View extends JFrame implements java.util.Observer{
 		System.out.println("Node Status updated!!!");
 		
 		state.updateState((ModelSubscribe)o);
+	}
+
+	public String getUserEmail() {
+		return userEmail;
+	}
+	public void setUserEmail(String string) {
+		// TODO Auto-generated method stub
+		userEmail = string;
 	}
 }

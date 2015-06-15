@@ -126,8 +126,6 @@ public class Controller implements KeyListener, MqttCallback {
 		    					strNodeList += node.getNodeId(i);
 		    					strNodeList += "/";
 		    					strNodeList += node.getNodeName(i);		    					
-		    					//addSubscribeTopic("/sanode/"+ node.getNodeId(i) +"/status");
-		    					//addSubscribeTopic("/sanode/"+ node.getNodeId(i) +"/notify");		    					
 		    					if(i+1 < node.getNodeNum())
 		    						strNodeList += "/";
 		    				}
@@ -193,6 +191,16 @@ public class Controller implements KeyListener, MqttCallback {
 			if(httpserver.unregisterNode(view.getUserName(), str[0])){
 				System.out.println("remove node sn = " + str[0] + ".");
 				node.removeNodeById(str[0]);
+				
+				try {
+					client.unsubscribe("/node/"+ str[0] + "/status");
+					client.unsubscribe("/node/"+ str[0] + "/notify");
+				} 
+				catch (MqttException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
 				view.addText("Success!!!\n");
 				return true;
 			}			
@@ -266,9 +274,10 @@ public class Controller implements KeyListener, MqttCallback {
 			return -1;
 		}
 		
-		System.out.println("session id = " + sid);
+		System.out.println("session id = " + sid);		
 		
 		view.setUserName(sid);
+		view.setUserEmail(str[0]);
 		initSubscriber(sid, str[0]);
 		
 		String mynode = httpserver.getNodeList(sid);
@@ -342,6 +351,7 @@ public class Controller implements KeyListener, MqttCallback {
 			}
 			else if(topicStack[3].matches("heartbeat")) {
 				progressHeartbeat(arg1.toString());
+				node.triggerViewUpdate();
 			}
 			else if(topicStack[3].matches("register")) {
 				progressRegisterNotify(arg1.toString());
