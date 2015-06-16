@@ -253,7 +253,6 @@ public class Controller implements KeyListener, MqttCallback {
 		String[] str;
 		String[] newlinestr = loginStr.split("\n");	
 
-
 		System.out.print("newlien num = " + newlinestr.length);
 		if(newlinestr.length > 1) {
 			str = newlinestr[1].split("/");
@@ -266,9 +265,7 @@ public class Controller implements KeyListener, MqttCallback {
 			System.out.println("Invalid input for log-in");
 			return -1;
 		}
-//int i=0;
-//while(i++!=100)
-//{
+		
 		httpserver = HTTPServerAdapter.getInstance();
 		String sid = httpserver.loginProgess(str[0], str[1]);
 		if( sid == null ) {
@@ -287,7 +284,7 @@ public class Controller implements KeyListener, MqttCallback {
 		System.out.println("mynode -------------------------------");
 		
 		nodeListParse(mynode);
-//}		
+		
 		return 0;
 	}
 	
