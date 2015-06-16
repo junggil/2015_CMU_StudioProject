@@ -46,7 +46,7 @@ public class Notification implements State {
 			String topic = "/sanode/"+ nodeId +"/control";
 			
 			JSONObject jsonObj = new JSONObject();
-			jsonObj.put("publisher", view.getUserName());
+			jsonObj.put("publisher", view.getUserEmail());
 			jsonObj.put("name", "alarm");
 			jsonObj.put("value", "on");
 			
@@ -105,7 +105,7 @@ public class Notification implements State {
 			if(model.hasMessage(i)) {
 				view.textPane.append(" [" + model.getNodeName(i) + "] " + model.getNotificationMsg(i) + view.newline);
 				if(model.isAlertMsg(i)) {
-					moreInfo = "\n[Alert] Do you want to enable the alarm? [yes/no]\n";
+					moreInfo = "\n [Alert] Do you want to enable the alarm? [yes/no]\n";
 					nodeId = model.getNodeId(i);
 				}
 			}

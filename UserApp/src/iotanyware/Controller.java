@@ -72,11 +72,13 @@ public class Controller implements KeyListener, MqttCallback {
 		if(e.getKeyCode() == KeyEvent.VK_ENTER) {
 			System.out.println("Enter Key!!!!!");
 			
-			String inputString = view.getInputString();
-			
-			if(view != null){
-				view.clearInputText();
+			if(view == null) {
+				return;
 			}
+			
+			String inputString = view.getInputString();
+						
+			view.clearInputText();
 			
 			String[] str = inputString.split("\n");
 	    	int lastStringIndex = str.length;
@@ -124,8 +126,6 @@ public class Controller implements KeyListener, MqttCallback {
 		    					strNodeList += node.getNodeId(i);
 		    					strNodeList += "/";
 		    					strNodeList += node.getNodeName(i);		    					
-		    					//addSubscribeTopic("/sanode/"+ node.getNodeId(i) +"/status");
-		    					//addSubscribeTopic("/sanode/"+ node.getNodeId(i) +"/notify");		    					
 		    					if(i+1 < node.getNodeNum())
 		    						strNodeList += "/";
 		    				}
@@ -185,12 +185,22 @@ public class Controller implements KeyListener, MqttCallback {
 			str = newlinestr[0].split("/"); //input.split("/");
 		}		
 		
-		httpserver = new HTTPServerAdapter();
+		httpserver = HTTPServerAdapter.getInstance();
 		if(str.length == 1) {
 			//TODO unregister
 			if(httpserver.unregisterNode(view.getUserName(), str[0])){
 				System.out.println("remove node sn = " + str[0] + ".");
 				node.removeNodeById(str[0]);
+				
+				try {
+					client.unsubscribe("/node/"+ str[0] + "/status");
+					client.unsubscribe("/node/"+ str[0] + "/notify");
+				} 
+				catch (MqttException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
 				view.addText("Success!!!\n");
 				return true;
 			}			
@@ -230,7 +240,7 @@ public class Controller implements KeyListener, MqttCallback {
 			return -1;
 		}
 		
-		httpserver = new HTTPServerAdapter();
+		httpserver = HTTPServerAdapter.getInstance();
 		boolean isOk = httpserver.registerUser(str[0], str[1]);
 			
 		if(isOk){
@@ -256,7 +266,7 @@ public class Controller implements KeyListener, MqttCallback {
 			return -1;
 		}
 		
-		httpserver = new HTTPServerAdapter();
+		httpserver = HTTPServerAdapter.getInstance();
 		String sid = httpserver.loginProgess(str[0], str[1]);
 		if( sid == null ) {
 			System.out.println("Login was failed!");
@@ -264,12 +274,14 @@ public class Controller implements KeyListener, MqttCallback {
 			return -1;
 		}
 		
-		System.out.println("session id = " + sid);
+		System.out.println("session id = " + sid);		
 		
 		view.setUserName(sid);
+		view.setUserEmail(str[0]);
 		initSubscriber(sid, str[0]);
 		
 		String mynode = httpserver.getNodeList(sid);
+		System.out.println("mynode -------------------------------");
 		
 		nodeListParse(mynode);
 		
@@ -340,6 +352,7 @@ public class Controller implements KeyListener, MqttCallback {
 			}
 			else if(topicStack[3].matches("heartbeat")) {
 				progressHeartbeat(arg1.toString());
+				node.triggerViewUpdate();
 			}
 			else if(topicStack[3].matches("register")) {
 				progressRegisterNotify(arg1.toString());

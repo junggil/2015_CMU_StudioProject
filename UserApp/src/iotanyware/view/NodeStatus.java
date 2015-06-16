@@ -1,10 +1,5 @@
 package iotanyware.view;
 
-import java.io.IOException;
-import java.io.StringWriter;
-
-import org.json.simple.JSONObject;
-
 import iotanyware.model.ModelSubscribe;
 
 public class NodeStatus implements State {
@@ -52,19 +47,7 @@ public class NodeStatus implements State {
         
 		if(!update){
 			String topic = "/sanode/" + model.getNodeId(view.getNodeIndex()) + "/query";
-			
-			JSONObject jsonObj = new JSONObject();
-			jsonObj.put("publisher", view.getUserName());
-			
-			StringWriter toStr = new StringWriter();
-			try {
-				jsonObj.writeJSONString(toStr);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			
-			String payload = jsonObj.toString();
+			String payload = "{\"publisher\":\"" + view.getUserEmail() + "\"}";
 			view.publishMessage(topic, payload, 0);
 			System.out.println("______________________________________________________________");
 		}

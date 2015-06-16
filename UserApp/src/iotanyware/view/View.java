@@ -37,6 +37,7 @@ public class View extends JFrame implements java.util.Observer{
     private int nodeIndex;
     private int saIndex;
     private String username;
+    private String userEmail;
     
     State state;
     
@@ -63,10 +64,10 @@ public class View extends JFrame implements java.util.Observer{
         //Create the text area for the status log and configure it.
         changeLog = new JTextPane();
         changeLog.setEditable(true);
-        JScrollPane scrollPaneForLog = new JScrollPane(changeLog);
         changeLog.setFont(font);
  
         //Create a split pane for the change log and the text area.
+        JScrollPane scrollPaneForLog = new JScrollPane(changeLog);
         JSplitPane splitPane = new JSplitPane(
                                        JSplitPane.VERTICAL_SPLIT,
                                        scrollPane, scrollPaneForLog);
@@ -232,5 +233,13 @@ public class View extends JFrame implements java.util.Observer{
 		System.out.println("Node Status updated!!!");
 		
 		state.updateState((ModelSubscribe)o);
+	}
+
+	public String getUserEmail() {
+		return userEmail;
+	}
+	public void setUserEmail(String string) {
+		// TODO Auto-generated method stub
+		userEmail = string;
 	}
 }

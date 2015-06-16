@@ -75,7 +75,7 @@ public class WelcomeState implements State {
 	        	view.textPane.append((k) + ". SA Node - " + str[i+1] + view.newline);
 	        	
 	        	//for update each node status, it will pub. the query topic for each node. 
-	        	view.publishMessage("/sanode/" + str[i] +"/query", "{\"publisher\":\"" + view.getUserName() + "\"}", 0);
+	        	view.publishMessage("/sanode/" + str[i] +"/query", "{\"publisher\":\"" + view.getUserEmail() + "\"}", 0);
 	        }
         }
 		

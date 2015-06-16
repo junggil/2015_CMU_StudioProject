@@ -39,7 +39,7 @@ public class LogView implements State{
 		
 		view.textPane.setText("");
 		
-		HTTPServerAdapter httpServer = new HTTPServerAdapter();
+		HTTPServerAdapter httpServer = HTTPServerAdapter.getInstance();
 		String log = httpServer.viewLog(view.getUserName());
 		
 		view.textPane.append(log);

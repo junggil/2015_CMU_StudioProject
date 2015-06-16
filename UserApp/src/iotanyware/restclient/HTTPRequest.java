@@ -51,13 +51,14 @@ import java.util.Map;
  */
 public class HTTPRequest {
 	
-	private IConnectionProvider _connectionProvider;
+	private static IConnectionProvider _connectionProvider = null;
+	private static HTTPRequest SingleInstance = null;
 
 	/**
 	 * constructor where client provides connectionProvider
 	 * 	
 	 */
-	public HTTPRequest(IConnectionProvider connectionProvider) {
+	protected HTTPRequest(IConnectionProvider connectionProvider) {
 		_connectionProvider = connectionProvider;
 	}
 	
@@ -65,8 +66,16 @@ public class HTTPRequest {
 	 * constructor that uses default connection provider
 	 */
 	public HTTPRequest() {
-		_connectionProvider = new DefaultConnectionProvider();
+		if (_connectionProvider == null)
+			_connectionProvider = new DefaultConnectionProvider();
 	}
+	
+	public static HTTPRequest getInstance() {
+		if(SingleInstance == null) {
+			SingleInstance = new HTTPRequest();
+		}
+		return SingleInstance;
+	}	
 	
     /**
      * Do an authenticated HTTP GET from url
@@ -209,7 +218,7 @@ public class HTTPRequest {
 				propstr = propstr + ",";
 			}
 		}
-		System.out.println(propstr);
+		//System.out.println(propstr);
 		return propstr + "}";
 	}
 }

@@ -42,7 +42,7 @@ public class NodeControl implements State {
 		String topic = topicId + "/control";
 		
 		JSONObject jsonObj = new JSONObject();
-		jsonObj.put("publisher", view.getUserName());
+		jsonObj.put("publisher", view.getUserEmail());
 		jsonObj.put("name", saName);
 		jsonObj.put("value", string);
 		
