@@ -20,10 +20,12 @@ class Profile(db.Entity):
     nodes = Set('NodeProfile', cascade_delete=True)
 
 class Node(db.Entity):
-    nodeId       = PrimaryKey(str)
-    createDate   = Required(datetime, default=datetime.now)
-    profiles     = Set('NodeProfile', cascade_delete=True)
-    register     = Set('RegisteredNode', cascade_delete=True)
+    nodeId        = PrimaryKey(str)
+    virtual       = Required(bool, default=False)
+    createDate    = Required(datetime, default=datetime.now)
+    lastHeartBeat = Optional(datetime)
+    profiles      = Set('NodeProfile', cascade_delete=True)
+    register      = Set('RegisteredNode', cascade_delete=True)
 
 class NodeProfile(db.Entity):
     node    = Required(Node)

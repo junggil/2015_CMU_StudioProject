@@ -6,7 +6,7 @@ from uuid import uuid4
 from flask import request, jsonify, json
 from pony.orm import db_session, core, select
 from datetime import datetime, timedelta
-import paho.mqtt.publish as publish
+from daemon import client
 
 def _make_session(sessionOwner, sessionType):
     old_session = Session.get(lambda s:s.sessionOwner == sessionOwner)
@@ -22,6 +22,11 @@ def _hide_privates(session):
     for key in ['sessionType', 'sessionOwner', 'enabled', 'createDate']:
         del(session[key])
     return session
+
+def add_relation_node_to_user(nodeId, nickName, user, is_virtual=False):
+    Node(nodeId = nodeId, virtual=is_virtual)
+    RegisteredNode(owner = True, nickName = nickName, user = user, node = nodeId)
+    client.publish('/user/%s/register' % user, json.dumps({'node': nodeId, 'nickName': nickName, 'owner': True}))
 
 @app.route('/session/createUser', methods=['POST'])
 @auth.is_valid_client()
@@ -51,11 +56,8 @@ def createNode():
         return jsonify({'statusCode': 400, 'result': 'Unregisterd nodeId'})
     else:
         if pendingNode:
-            Node(nodeId = pendingNode.nodeId)
+            add_relation_node_to_user(pendingNode.nodeId, pendingNode.nickName, pendingNode.user.email)
             session = _make_session(pendingNode.nodeId, 'node')
-            RegisteredNode(owner = True, nickName = pendingNode.nickName, user = pendingNode.user, node = pendingNode.nodeId)
-            publish.single('/user/%s/register' % pendingNode.user.email, json.dumps({'node': pendingNode.nodeId, 
-                            'nickName': pendingNode.nickName, 'owner': True}), hostname='broker.mqttdashboard.com')
             pendingNode.delete()
             db.commit()
         else:

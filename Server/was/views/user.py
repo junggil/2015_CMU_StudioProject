@@ -1,6 +1,8 @@
 from was import app, db
 from was.models import *
+from was.views import session
 from was.decorators import args, auth
+from daemon import vnode
 from flask import request, jsonify
 from pony.orm import db_session, core, select
 from pony.orm.core import ObjectNotFound
@@ -34,22 +36,27 @@ def getNodeList():
 @db_session
 def registerNode():
     try:
-        nodeId = request.get_json()['nodeId']
-        sessionOwner = Session[request.get_json()['session']].sessionOwner
+        params = request.get_json()
+        nodeId = params['nodeId']
+        sessionOwner = Session[params['session']].sessionOwner
 
         if Node.get(nodeId=nodeId):
             return jsonify({'statusCode': 400, 'result': 'Already registed nodeId'})
 
-        old_pending_request = PendingRequestNode.get(nodeId = nodeId)
-        if old_pending_request:
-            if old_pending_request.user.email == sessionOwner:
-                old_pending_request.delete()
-                db.commit()
-            else:
-                return jsonify({'statusCode': 400, 'result': 'Already registed nodeId'})
+        if params.get('virtual'):
+            session.add_relation_node_to_user(nodeId, params.get('nickName', nodeId), sessionOwner, is_virtual=True)
+            vnode.add_vnode(nodeId)
+        else:
+            old_pending_request = PendingRequestNode.get(nodeId = nodeId)
+            if old_pending_request:
+                if old_pending_request.user.email == sessionOwner:
+                    old_pending_request.delete()
+                    db.commit()
+                else:
+                    return jsonify({'statusCode': 400, 'result': 'Already registed nodeId'})
 
-        PendingRequestNode(nodeId=nodeId, user=sessionOwner, nickName=request.get_json().get('nickName', nodeId))
-        db.commit()
+            PendingRequestNode(nodeId=nodeId, user=sessionOwner, nickName=params.get('nickName', nodeId))
+            db.commit()
         return jsonify({'statusCode': 200, 'result': {}})
     except ObjectNotFound:
         return jsonify({'statusCode': 400, 'result': 'Invalid session'})
@@ -62,7 +69,12 @@ def registerNode():
 def unregisterNode():
     try:
         nodeId = request.get_json()['nodeId']
-        Node[nodeId].delete()
+        node = Node[nodeId]
+
+        if node.virtual:
+            vnode.del_vnode(nodeId)
+
+        node.delete()
         db.commit()
         return jsonify({'statusCode': 200, 'result': {}})
     except ObjectNotFound:
