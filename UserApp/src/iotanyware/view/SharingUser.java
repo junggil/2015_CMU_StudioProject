@@ -11,7 +11,7 @@ public class SharingUser implements State {
 	View view;
 	
 	int selectedNodeIdx = -1;
-	//String[] strNodeId;
+	String resultStr = "";
 	List<String> list = new ArrayList<String>();
 	int maxNodeNum = 0;
 	
@@ -22,6 +22,7 @@ public class SharingUser implements State {
 	@Override
 	public void enterNumber(int number) {
 		// TODO Auto-generated method stub
+		resultStr = "";
 		if(number == 0) {
 			view.setStatus(view.getNodeList());
 			selectedNodeIdx = -1;
@@ -35,7 +36,8 @@ public class SharingUser implements State {
 	public void enterString(String string) {
 		// TODO Auto-generated method stub		
 		if(selectedNodeIdx < 0) {
-			System.out.println("not available");			
+			System.out.println("not available");
+			resultStr = "";
 		}
 		else {
 			HTTPServerAdapter httpserver = HTTPServerAdapter.getInstance();
@@ -47,11 +49,11 @@ public class SharingUser implements State {
 
 			if(httpserver.sharingUser(view.getUserName(), strNodeId[selectedNodeIdx], string)){
 				System.out.println("++++++++++++++++++++++++++++");
-				view.textPane.append("\nOK!!!" + view.newline);
+				resultStr += "\nSuccess!!!\n";
 			}
 			else {
 				System.out.println("+++++++++++++++++++++++++++++");
-				view.textPane.append("\nFail!!!" + view.newline);
+				resultStr += "\nFail!!!\n";
 			}
 		}
 	}
@@ -95,7 +97,7 @@ public class SharingUser implements State {
 		        for (int i = 0; i < initString.length; i ++) {
 		        	view.textPane.append(initString[i] + view.newline);
 		        } 
-		        
+		        view.textPane.append(resultStr);
 		}		
 	}
 
