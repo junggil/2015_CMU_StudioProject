@@ -380,8 +380,7 @@ public class Controller implements KeyListener, MqttCallback {
 			System.out.println( jsonObject.get("owner") ); 		//nodeOwner
 			
 			SANode san;	
-			//san = new SANode((String)jsonObject.get("node"), (String)jsonObject.get("nickName"), (boolean)jsonObject.get("owner"));
-			san = new SANode((String)jsonObject.get("node"), (String)jsonObject.get("nickName"), true);
+			san = new SANode((String)jsonObject.get("node"), (String)jsonObject.get("nickName"), (boolean)jsonObject.get("owner"));
 			node.addNewNode(san);
 			int idx = node.findNodeIndexById((String)jsonObject.get("node"));
 			node.setPleaseAddSub(idx, true);

@@ -61,7 +61,7 @@ public class WelcomeState implements State {
               "3. View Log",
               "4. Sharing SA node",
               "",
-              "Please select the node number, if you show detail",
+              "Please select the node number, if you want to show detail",
               ""};
 
         for (int i = 0; i < initString.length; i ++) {
