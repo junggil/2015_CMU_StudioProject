@@ -54,11 +54,11 @@ public class View extends JFrame implements java.util.Observer{
         textPane.setMargin(new Insets(5,5,5,5));
         
         JScrollPane scrollPane = new JScrollPane(textPane);
-        scrollPane.setPreferredSize(new Dimension(800, 500));
+        scrollPane.setPreferredSize(new Dimension(1200, 900));
         textPane.setEditable(false);
         
         //Font font = new Font("Lucida Sans", Font.BOLD,  15);
-        Font font = new Font("Consolas", Font.BOLD,  20);
+        Font font = new Font("Consolas", Font.BOLD,  35);
         textPane.setFont(font);
  
         //Create the text area for the status log and configure it.
@@ -203,36 +203,51 @@ public class View extends JFrame implements java.util.Observer{
     	textPane.append(str + newline);
     }
     
-    public void publishMessage(String topic, String payload, int qos) {
-    	System.out.println("Publishing topic  : " + topic);
-    	System.out.println("Publishing message: " + payload);
-    	
-    	int qosVale = 2;
-    	if( qos >= 0 && qos <= 2) {
-    		qosVale = qos;
+    public void addSubTopic(String topic){
+    	synchronized(pubClient) {
+			try{			
+				System.out.println("view.addSubscribeTopic = " + topic);
+					pubClient.subscribe(topic);
+			} catch (MqttException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
     	}
-    	
-    	try {
-	        MqttMessage message = new MqttMessage(payload.getBytes());
-	        message.setQos(qosVale);
-	        pubClient.publish(topic, message);
-	        System.out.println("Message published");
-    	} catch(MqttException me) {
-            System.out.println("reason " + me.getReasonCode());
-            System.out.println("msg    " + me.getMessage());
-            System.out.println("loc    " + me.getLocalizedMessage());
-            System.out.println("cause  " + me.getCause());
-            System.out.println("excep  " + me);
-            me.printStackTrace();
-        }
+    }
+    
+    public void publishMessage(String topic, String payload, int qos) {
+    	synchronized(pubClient) {
+	    	System.out.println("Publishing topic  : " + topic);
+	    	System.out.println("Publishing message: " + payload);
+	    	
+	    	int qosVale = 2;
+	    	if( qos >= 0 && qos <= 2) {
+	    		qosVale = qos;
+	    	}
+	    	
+	    	try {
+		        MqttMessage message = new MqttMessage(payload.getBytes());
+		        message.setQos(qosVale);
+		        pubClient.publish(topic, message);
+		        System.out.println("Message published");
+	    	} catch(MqttException me) {
+	            System.out.println("reason " + me.getReasonCode());
+	            System.out.println("msg    " + me.getMessage());
+	            System.out.println("loc    " + me.getLocalizedMessage());
+	            System.out.println("cause  " + me.getCause());
+	            System.out.println("excep  " + me);
+	            me.printStackTrace();
+	        }
+    	}
     }
         
 	@Override
 	public void update(Observable o, Object arg) {
 		// TODO Auto-generated method stub
 		System.out.println("Node Status updated!!!");
-		
-		state.updateState((ModelSubscribe)o);
+		//synchronized(this) {
+			state.updateState((ModelSubscribe)o);
+		//}
 	}
 
 	public String getUserEmail() {

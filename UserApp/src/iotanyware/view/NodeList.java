@@ -49,15 +49,25 @@ public class NodeList implements State {
               "2. Configure",
               "3. View Log",
               "",
-              "Please select the node number, if you show detail",
+              "Please select the node number, if you want to show detail",
               ""};
 
         for (int i = 0; i < initString.length; i ++) {
         	view.textPane.append(initString[i] + view.newline);
         }
-        		
-		for(int i=0; i < model.getNodeNum(); i++) {
-			view.textPane.append((i+4) +". SA Node - "+ model.getNodeName(i) + view.newline);
-		}
+        
+        //synchronized(this) {		
+			for(int i=0; i < model.getNodeNum(); i++) {
+				view.textPane.append((i+4) +". SA Node - "+ model.getNodeName(i) + view.newline);
+				if(model.getPleaseAddSub(i)) {
+					model.setPleaseAddSub(i, false);
+					String nid = model.getNodeId(i);
+					System.out.println(nid + "Sub topic");
+					view.addSubTopic("/sanode/"+ nid +"/status");
+					view.addSubTopic("/sanode/"+ nid +"/notify");
+					System.out.println("------------------------------------");
+				}
+			}
+        //}
 	}
 }

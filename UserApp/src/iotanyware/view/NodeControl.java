@@ -39,6 +39,11 @@ public class NodeControl implements State {
 		
 		//if you need to check the input string, please compare to validStr
 		
+		if(topicId.matches("alarm on")) {
+			System.out.println("alram is on!!!!!!!!!!!!!!!!!!!!!!!!");
+			return;
+		}
+		
 		String topic = topicId + "/control";
 		
 		JSONObject jsonObj = new JSONObject();
@@ -62,6 +67,8 @@ public class NodeControl implements State {
 	public void updateState(ModelSubscribe model) {		
 		// TODO Auto-generated method stub
 		view.textPane.setText("");
+		
+		topicId = "";
 		
         String initString[] =
             { "Node Control of ",
@@ -110,12 +117,19 @@ public class NodeControl implements State {
         
         view.textPane.append(view.newline);  
         
-        //show the how to input.
-        topicId = "/sanode/" + model.getNodeId(view.getNodeIndex());
-        saName = model.getSensorActuatorName(view.getNodeIndex(), findControlTarget);
-		validStr = model.getSensorActuatorProfile(view.getNodeIndex(), findControlTarget);
-        view.textPane.append( "Is new value  " + validStr + "?" + view.newline);
-        
-        view.textPane.append("\nIf OK, current status will be changed new one" + view.newline);
+        int alarmIdx = model.findSensorActuatorIndex("alarm", view.getNodeIndex());
+        if((alarmIdx != findControlTarget) && (model.getSensorActuatorValue(view.getNodeIndex(), alarmIdx).matches("on")) ) {
+        	view.textPane.append( "\n\nPlease off the alarm  first!!!" + view.newline);
+        	topicId = "alarm on";
+        }
+        else {
+	        //show the how to input.
+	        topicId = "/sanode/" + model.getNodeId(view.getNodeIndex());
+	        saName = model.getSensorActuatorName(view.getNodeIndex(), findControlTarget);
+			validStr = model.getSensorActuatorProfile(view.getNodeIndex(), findControlTarget);
+	        view.textPane.append( "Is new value  " + validStr + "?" + view.newline);
+	        
+	        view.textPane.append("\nIf OK, current status will be changed new one" + view.newline);
+        }
 	}
 }
