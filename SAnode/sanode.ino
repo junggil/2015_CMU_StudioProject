@@ -14,13 +14,20 @@
  Define Macro and Enum
 **********************************************************************************************/
 
+#define LOCAL_SERVER
+
 #define DhtPin   8         // This #define defines the pin that will be used to get data 
                            // from the tempurature & humidity sensor.                            
 //#define MQTT_SERVER "iot.eclipse.org"
 #define MQTT_CLIENT_ID "SA_NODE01"
 #define WIFI_SSID "LGTeam1"
 
+#ifdef LOCAL_SERVER
+#define MQTT_SERVER "54.166.26.101"
+#else
 #define MQTT_SERVER "broker.mqttdashboard.com"
+#endif
+
 #define MQTT_SERVER_PORT 1883
 
 #define WEB_SERVER "54.166.26.101"
@@ -33,7 +40,9 @@
 #define STRING_TYPE 3
 #define THERMOSTAT 4
 #define HUMIDITY 5
-#define MAX 6
+#define AUTOLIGHTOFF 6
+#define AUTOALARMON 7
+#define MAX 8
 
 #define OPEN 0
 #define CLOSE 1
@@ -74,12 +83,12 @@ PubSubClient client(MQTT_SERVER, MQTT_SERVER_PORT, network_subscribeBUS, wifiCli
 #define BUF_LEN          24
 #define TOPIC_CLASS     "sanode"
 
-#define NODE_NAME       nodeName
+#define NODE_NAME        nodeName
 
-boolean boardConfig[] = { true, true, true, true, true, true };
+boolean boardConfig[] = { true, true, true, true, true, true , true, true};
 char nodeName[BUF_LEN] ;
 
-const char * names[] = { "door", "alarm", "light","proximity","thermostat","humidity" };
+const char * names[] = { "door", "alarm", "light","proximity","thermostat","humidity", "autolightoff", "autoalarmon"};
 const char * values[][2] = { {"open","close"}, {"off","on"}, {"off","on"}, {"occupied","vacant"}};
 const char * subscribe_method[] = { "control", "query" };
 char topicPrefix[BUF_LEN]; 
@@ -297,7 +306,7 @@ void command_sendStatusAll(void)
 
 void command_sendHeartBeat (void)
 {
-    network_publishBUS("heartbeat", "{}");
+    network_publishBUS("heartbeat", "{\"\"}");
 }
 
 boolean executeQuery = true;
@@ -333,9 +342,15 @@ void command_executeControl (char * name, char * value)
    int name_idx = manager_getNameIdx(name);
    int ivalue = manager_getValueInt(name_idx,value);
    
+   if ( ivalue == -1 )
+       return; 
+   
    if (!boardConfig[name_idx])
        return ;
-
+       
+   if (curStatus[ALARM] == ON  && name_idx == DOOR && ivalue == OPEN)
+       return ;
+   
    if ( name_idx == DOOR)
        (ivalue==0) ? OpenDoor() : CloseDoor();
    else if (name_idx == LIGHT)
@@ -345,9 +360,10 @@ void command_executeControl (char * name, char * value)
        CloseDoor();
        (ivalue==0) ? LedOff(AlarmPin):LedOn(AlarmPin);
    }
-
-   if (curStatus[ALARM] == ON  && name_idx == DOOR && ivalue == OPEN)
-       return ;
+   else if (name_idx == AUTOLIGHTOFF)
+     autoLightOffTime = ivalue;
+   else if (name_idx == AUTOALARMON)
+     autoAlarmOnTime = ivalue;
    
    if ( name_idx == ALARM)
        autoAlarmOnStart = false;
@@ -373,12 +389,8 @@ void managere_scanNode(void)
   else
   {
       snprintf(nodeName,BUF_LEN,"%s","0002");
-      boardConfig[DOOR] = false;
-      boardConfig[ALARM] = false;
-      boardConfig[LIGHT] = false;
+      memset(boardConfig, 0x00, sizeof(boardConfig));      
       boardConfig[PROXIMITY]  = true;
-      boardConfig[THERMOSTAT] = false;
-      boardConfig[HUMIDITY] = false;
   }
   
   Serial.print("nodeName"); Serial.println(nodeName);
@@ -426,8 +438,10 @@ int manager_getValueInt(int name_idx, char * value)
   }
    if (strcmp(values[name_idx][0],value) == 0 )
        return 0;
-   else 
+   else if (strcmp(values[name_idx][1],value) == 0 )
        return 1;
+   else
+       return -1;
 }
 void manager_getValueString(int name_idx, int value, String & sValue)
 {
@@ -495,6 +509,16 @@ void manager_nodeStatusCheck(unsigned long diff)
     val  = DHT.humidity;
     curStatus[HUMIDITY]=val;
   }
+  if (boardConfig[AUTOLIGHTOFF])
+  { 
+    val  = autoLightOffTime;
+    curStatus[AUTOLIGHTOFF]=val;
+  }
+  if (boardConfig[AUTOALARMON])
+  { 
+    val  = autoAlarmOnTime;
+    curStatus[AUTOALARMON]=val;
+  }
 }
 
 void manager_statsTransitionPolicy(int name_idx,int prev, int cur)
@@ -515,7 +539,7 @@ void manager_statsTransitionPolicy(int name_idx,int prev, int cur)
 
      if (name_idx == PROXIMITY && prev == OCCUPIED && cur == VACANT && curStatus[ALARM] == OFF)
      {
-         command_sendMessage("alert", "info", "Door opened! But alarm is not ON.");
+         command_sendMessage("alert", "info", "The house is vacant, but alarm is off");
          autoAlarmOnStart = true;
      }
 #if 0     
