@@ -200,4 +200,8 @@ public class ModelSubscribe extends java.util.Observable {
 		setChanged();
 		notifyObservers(nodeList);
 	}
+	
+	public boolean isMyOwnNode(int idx) {
+		return nodeList.get(idx).getOwner();
+	}
 }

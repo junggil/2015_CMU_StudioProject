@@ -33,6 +33,7 @@ public class View extends JFrame implements java.util.Observer{
     private NodeRegister register;
     private Configure configure;
     private LogView logview;
+    private SharingUser sharingUser;
     
     private int nodeIndex;
     private int saIndex;
@@ -90,6 +91,7 @@ public class View extends JFrame implements java.util.Observer{
         register = new NodeRegister(this);
         configure = new Configure(this);
         logview = new LogView(this);
+        sharingUser = new SharingUser(this);
         
         state = welcome;
     }
@@ -256,5 +258,9 @@ public class View extends JFrame implements java.util.Observer{
 	public void setUserEmail(String string) {
 		// TODO Auto-generated method stub
 		userEmail = string;
+	}
+
+	public State getSharingState() {
+		return sharingUser;
 	}
 }

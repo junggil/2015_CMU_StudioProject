@@ -31,6 +31,32 @@ public class NodeControl implements State {
 			view.setSaIndex(0);
 			view.setStatus(view.getNodeStatus());
 		}
+		else {
+			if(saName.matches("autoalarmon") || saName.matches("autolightoff")) {
+				if(topicId.matches("alarm on")) {
+					System.out.println("alram is on!!!!!!!!!!!!!!!!!!!!!!!!");
+					return;
+				}
+				
+				String topic = topicId + "/control";
+				
+				JSONObject jsonObj = new JSONObject();
+				jsonObj.put("publisher", view.getUserEmail());
+				jsonObj.put("name", saName);
+				jsonObj.put("value", String.valueOf(number));
+				
+				StringWriter toStr = new StringWriter();
+				try {
+					jsonObj.writeJSONString(toStr);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+				String payload = jsonObj.toString();
+				view.publishMessage(topic, payload, 0);
+			}
+		}
 	}
 
 	@Override

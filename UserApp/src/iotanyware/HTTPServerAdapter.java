@@ -30,6 +30,7 @@ public class HTTPServerAdapter implements ServerInterface{
 	private static final String BODY_NODEID_KEY = "nodeId";
 	private static final String BODY_NICKNAME_KEY = "nickName";	
 	private static final String BODY_LOGHOUR_KEY = "loggingHour";
+	private static final String BODY_TARGETUSER_KEY = "targetUser";
 
 	protected HTTPServerAdapter() {
 	}
@@ -351,6 +352,47 @@ public class HTTPServerAdapter implements ServerInterface{
 		} catch (IOException | JSONException e) {
 			System.out.println(e);
 			return -1;
+		}
+	}
+
+	@Override
+	public boolean sharingUser(String sessionid, String nodeid, String user) {
+		HTTPRequest httprequest = HTTPRequest.getInstance();
+		HTTPResponse httpresponse;
+		String uri = SERVER_URL + "/user/shareNode";
+
+		HashMap<String, String> headers = new HashMap<String, String>(); 
+		HashMap<String, String> body = new HashMap<String, String>();
+
+		System.out.println(uri);
+		try {
+			
+			// 1.Handle HTTP request
+			headers.put(HEADER_CONTENT_KEY, HEADER_CONTENT_VAL);
+			headers.put(HEADER_CLIENTID_KEY, HEADER_CLIENTID_VAL);
+			
+			body.put(BODY_SESSIONID_KEY, sessionid);
+			body.put(BODY_NODEID_KEY, nodeid);
+			body.put(BODY_TARGETUSER_KEY, user);	
+			
+			httpresponse = httprequest.post(uri, httprequest.propertyString(body), headers);
+
+			// 2.Handle HTTP response
+			String resString = URLDecoder.decode(httpresponse.getString(), "UTF-8");
+    		System.out.println(resString);
+
+			// 3. JSON parse the response
+    		JSONObject jresString = new JSONObject(resString);
+    		Object jstatusCode = jresString.get("statusCode");
+    		
+    		if((int)jstatusCode == 200)
+    			return true;
+    		else 
+    			return false;
+    		
+		} catch (IOException | JSONException  e) {
+			System.out.println(e);
+			return false;
 		}
 	}	
 }

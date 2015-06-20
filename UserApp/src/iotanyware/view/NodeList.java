@@ -15,8 +15,8 @@ public class NodeList implements State {
 	public void enterNumber(int number) {
 		// TODO Auto-generated method stub
 		
-		if( number > 3) { //node selection
-			view.setNodeIndex(number-4);
+		if( number > 4) { //node selection
+			view.setNodeIndex(number-5);
 			view.setStatus(view.getNodeStatus());
 		}
 		else if(number == 1) {
@@ -27,6 +27,9 @@ public class NodeList implements State {
 		}
 		else if(number == 3) {
 			view.setStatus(view.getLogViewState());
+		}
+		else if(number == 4) {
+			view.setStatus(view.getSharingState());
 		}
 	}
 
@@ -48,6 +51,7 @@ public class NodeList implements State {
               "1. Regiter/Unregiter Node",
               "2. Configure",
               "3. View Log",
+              "4. Sharing SA node",
               "",
               "Please select the node number, if you want to show detail",
               ""};
@@ -58,7 +62,7 @@ public class NodeList implements State {
         
         //synchronized(this) {		
 			for(int i=0; i < model.getNodeNum(); i++) {
-				view.textPane.append((i+4) +". SA Node - "+ model.getNodeName(i) + view.newline);
+				view.textPane.append((i+5) +". SA Node - "+ model.getNodeName(i) + view.newline);
 				if(model.getPleaseAddSub(i)) {
 					model.setPleaseAddSub(i, false);
 					String nid = model.getNodeId(i);

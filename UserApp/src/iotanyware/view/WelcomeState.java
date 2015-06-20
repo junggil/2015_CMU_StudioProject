@@ -59,6 +59,7 @@ public class WelcomeState implements State {
               "1. Regiter/Unregiter Node",
               "2. Configure",
               "3. View Log",
+              "4. Sharing SA node",
               "",
               "Please select the node number, if you show detail",
               ""};
@@ -71,7 +72,7 @@ public class WelcomeState implements State {
 		
 		System.out.println("node num = " + str.length);
         if(str.length > 1 ) {
-	        for (int i = 0, k=4; i < str.length; i += 2, k++) {
+	        for (int i = 0, k=5; i < str.length; i += 2, k++) {
 	        	view.textPane.append((k) + ". SA Node - " + str[i+1] + view.newline);
 	        	
 	        	//for update each node status, it will pub. the query topic for each node. 

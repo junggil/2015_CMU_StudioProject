@@ -193,8 +193,8 @@ public class Controller implements KeyListener, MqttCallback {
 				
 				synchronized(client) {
 					try {
-						System.out.println("--------------- /node/"+ str[0] + "/status");
-						System.out.println("--------------- /node/"+ str[0] + "/notify");
+						System.out.println("--------------- /sanode/"+ str[0] + "/status");
+						System.out.println("--------------- /sanode/"+ str[0] + "/notify");
 						client.unsubscribe("/sanode/"+ str[0] + "/status");
 						client.unsubscribe("/sanode/"+ str[0] + "/notify");
 					} 
@@ -379,8 +379,9 @@ public class Controller implements KeyListener, MqttCallback {
 			System.out.println( jsonObject.get("nickName") ); 	//nodeName
 			System.out.println( jsonObject.get("owner") ); 		//nodeOwner
 			
-			SANode san;		
-			san = new SANode((String)jsonObject.get("node"), (String)jsonObject.get("nickName"), (boolean)jsonObject.get("owner"));	
+			SANode san;	
+			//san = new SANode((String)jsonObject.get("node"), (String)jsonObject.get("nickName"), (boolean)jsonObject.get("owner"));
+			san = new SANode((String)jsonObject.get("node"), (String)jsonObject.get("nickName"), true);
 			node.addNewNode(san);
 			int idx = node.findNodeIndexById((String)jsonObject.get("node"));
 			node.setPleaseAddSub(idx, true);
@@ -481,7 +482,8 @@ public class Controller implements KeyListener, MqttCallback {
 				System.out.println( nodeObj.get("owner") ); 	//nodeOwner
 				
 				SANode san;		
-				san = new SANode((String)nodeObj.get("node"), (String)nodeObj.get("nickName"), (boolean)nodeObj.get("owner"));
+				boolean b = (boolean)nodeObj.get("owner");
+				san = new SANode((String)nodeObj.get("node"), (String)nodeObj.get("nickName"), b);
 				node.addNewNode(san);
 				
 				addSubscribeTopic("/sanode/"+ nodeObj.get("node") +"/status");
