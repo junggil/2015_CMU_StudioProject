@@ -14,12 +14,24 @@
  Define Macro and Enum
 **********************************************************************************************/
 
+#define LOCAL_SERVER
+
 #define DhtPin   8         // This #define defines the pin that will be used to get data 
                            // from the tempurature & humidity sensor.                            
 //#define MQTT_SERVER "iot.eclipse.org"
-#define MQTT_SERVER "broker.mqttdashboard.com"
 #define MQTT_CLIENT_ID "SA_NODE01"
 #define WIFI_SSID "LGTeam1"
+
+#ifdef LOCAL_SERVER
+#define MQTT_SERVER "54.166.26.101"
+#else
+#define MQTT_SERVER "broker.mqttdashboard.com"
+#endif
+
+#define MQTT_SERVER_PORT 1883
+
+#define WEB_SERVER "54.166.26.101"
+#define WEB_SERVER_PORT 8000
 
 #define DOOR 0
 #define ALARM 1
@@ -28,7 +40,9 @@
 #define STRING_TYPE 3
 #define THERMOSTAT 4
 #define HUMIDITY 5
-#define MAX 6
+#define AUTOLIGHTOFF 6
+#define AUTOALARMON 7
+#define MAX 8
 
 #define OPEN 0
 #define CLOSE 1
@@ -62,21 +76,19 @@ int QtiPin = 6;            // The pin with QTI/proximity sensor
 // Callback function header
 char json[100];
 WiFiClient wifiClient;
+WiFiClient wifiHttpClient;
 //PubSubClient client(MQTT_SERVER, 1883, callback, wifiClient);
-PubSubClient client(MQTT_SERVER, 1883, network_subscribeBUS, wifiClient);
+PubSubClient client(MQTT_SERVER, MQTT_SERVER_PORT, network_subscribeBUS, wifiClient);
 
 #define BUF_LEN          24
 #define TOPIC_CLASS     "sanode"
 
-#ifdef MAILBOX
-boolean boardConfig[] = { false, false, false, true, false, false };
-#define NODE_NAME       "0002"
-#else
-boolean boardConfig[] = { true, true, true, true, true, true };
-#define NODE_NAME       "0001"
-#endif
+#define NODE_NAME        nodeName
 
-const char * names[] = { "door", "alarm", "light","proximity","thermostat","humidity" };
+boolean boardConfig[] = { true, true, true, true, true, true , true, true};
+char nodeName[BUF_LEN] ;
+
+const char * names[] = { "door", "alarm", "light","proximity","thermostat","humidity", "autolightoff", "autoalarmon"};
 const char * values[][2] = { {"open","close"}, {"off","on"}, {"off","on"}, {"occupied","vacant"}};
 const char * subscribe_method[] = { "control", "query" };
 char topicPrefix[BUF_LEN]; 
@@ -87,7 +99,6 @@ boolean  autoAlarmOnStart ;
 int prevStatus[MAX];
 int curStatus[MAX];
 
-
 /*********************************************************************************************
   Implementation
 **********************************************************************************************/
@@ -95,6 +106,7 @@ int curStatus[MAX];
 /*********************************************************************************************
   SA Protocol
 **********************************************************************************************/
+
 
 void protocol_getPayloadOfStatus(String name, String value, String &val) {
   val = "{";
@@ -187,6 +199,77 @@ void network_publishBUS(char * method, char * payload)
    
    client.publish((char *)topic.c_str(),payload);
 }
+void network_publishBUS2(char * method, byte * payload, int len)
+{
+   String topic;
+   protocol_makeTopic(String(method),topic);
+   
+   Serial.println(topic.c_str());
+   
+   client.publish((char *)topic.c_str(),payload,len);
+}
+
+byte network_postPage(char* domainBuffer,int thisPort,char* page,char* thisData)
+{
+  int  i, nretry = 10000, ret;
+  int inChar;
+  char outBuf[64];
+  
+  Serial.print(F("connecting..."));
+
+
+  for ( i = 0 ; i < nretry ;i ++)
+  {
+    if ((ret = wifiHttpClient.connect(domainBuffer,thisPort)) == 1)
+          break;
+  }
+  if(ret)
+  {
+    Serial.println(F("connected"));
+
+    // send the header
+    sprintf(outBuf,"POST %s HTTP/1.1",page);
+    wifiHttpClient.println(outBuf);
+    sprintf(outBuf,"Host: %s",domainBuffer);
+    wifiHttpClient.println(outBuf);
+    wifiHttpClient.println(F("Connection: close\r\nContent-Type: application/json\r\nx-client-id:75f9e675-9db4-4d02-b523-37521ef656ea"));
+    sprintf(outBuf,"Content-Length: %u\r\n",strlen(thisData));
+    wifiHttpClient.println(outBuf);
+
+    // send the body (variables)
+    wifiHttpClient.print(thisData);
+  } 
+  else
+  {
+    Serial.println(F("failed"));
+    return 0;
+  }
+  
+  int connectLoop = 0;
+
+  while(wifiHttpClient.connected())
+  {
+    while(wifiHttpClient.available())
+    {
+      inChar = wifiHttpClient.read();
+      Serial.write(inChar);
+      connectLoop = 0;
+    }
+
+    delay(1);
+    connectLoop++;
+    if(connectLoop > 10000)
+    {
+      Serial.println();
+      Serial.println(F("Timeout"));
+      wifiHttpClient.stop();
+    }
+  }
+  Serial.println();
+  Serial.println(F("disconnecting."));
+  wifiHttpClient.stop();
+  return 1;
+}
 
 /*********************************************************************************************
   SA Command
@@ -208,6 +291,8 @@ void command_sendStatus(int name_idx, int value)
      protocol_getPayloadOfStatus(String(names[name_idx]), strVal,payload);
      network_publishBUS("status",(char *)payload.c_str());
 }
+
+
 void command_sendStatusAll(void)
 {
     int i; 
@@ -221,7 +306,7 @@ void command_sendStatusAll(void)
 
 void command_sendHeartBeat (void)
 {
-    network_publishBUS("heartbeat", "{}");
+    network_publishBUS("heartbeat", "{\"\"}");
 }
 
 boolean executeQuery = true;
@@ -257,18 +342,28 @@ void command_executeControl (char * name, char * value)
    int name_idx = manager_getNameIdx(name);
    int ivalue = manager_getValueInt(name_idx,value);
    
+   if ( ivalue == -1 )
+       return; 
+   
    if (!boardConfig[name_idx])
        return ;
-
+       
+   if (curStatus[ALARM] == ON  && name_idx == DOOR && ivalue == OPEN)
+       return ;
+   
    if ( name_idx == DOOR)
        (ivalue==0) ? OpenDoor() : CloseDoor();
    else if (name_idx == LIGHT)
        (ivalue==0) ? LedOff(LightPin):LedOn(LightPin);
    else if (name_idx == ALARM)
+   {
+       CloseDoor();
        (ivalue==0) ? LedOff(AlarmPin):LedOn(AlarmPin);
-
-   if (curStatus[ALARM] == ON  && name_idx == DOOR && ivalue == OPEN)
-       return ;
+   }
+   else if (name_idx == AUTOLIGHTOFF)
+     autoLightOffTime = ivalue;
+   else if (name_idx == AUTOALARMON)
+     autoAlarmOnTime = ivalue;
    
    if ( name_idx == ALARM)
        autoAlarmOnStart = false;
@@ -277,9 +372,48 @@ void command_executeControl (char * name, char * value)
    executeControl = true;
 }
 
+void command_createSANode(void)
+{
+  String payload;
+  protocol_getPayloadOfCreateNodeID(payload);
+  network_postPage(WEB_SERVER,WEB_SERVER_PORT,"/session/createNode",(char *)payload.c_str());
+}
 /*********************************************************************************************
   SA Manager
 **********************************************************************************************/
+
+void managere_scanNode(void)
+{
+  if (manager_IsHouse())
+      snprintf(nodeName,BUF_LEN,"%s","0001");
+  else
+  {
+      snprintf(nodeName,BUF_LEN,"%s","0002");
+      memset(boardConfig, 0x00, sizeof(boardConfig));      
+      boardConfig[PROXIMITY]  = true;
+  }
+  
+  Serial.print("nodeName"); Serial.println(nodeName);
+  
+}
+boolean manager_IsHouse(void)
+{    
+      byte mac[6];
+      static boolean bInit = false;
+      static boolean bHouse = true;
+      
+     if (bInit == true)
+        return bHouse; 
+      
+      WiFi.macAddress(mac);
+     if (mac[5] == 0x78 && mac[4] == 0xC4 && mac[3] == 0x0E && mac[2] == 0x01 && mac[1] == 0x7f && mac[0] == 0xB3)
+         bHouse = true;
+     else
+         bHouse = false;
+     bInit = true;
+     return bHouse ;
+}
+
 
 int manager_getNameIdx(char * name)
 {
@@ -304,8 +438,10 @@ int manager_getValueInt(int name_idx, char * value)
   }
    if (strcmp(values[name_idx][0],value) == 0 )
        return 0;
-   else 
+   else if (strcmp(values[name_idx][1],value) == 0 )
        return 1;
+   else
+       return -1;
 }
 void manager_getValueString(int name_idx, int value, String & sValue)
 {
@@ -326,6 +462,9 @@ void manager_nodeStatusUpdate(void)
   int i ;
   for (i = 0 ; i < sizeof(names)/sizeof(char *) ;i ++)
   {
+    if (boardConfig[i] == false)
+      continue;
+    
     if (curStatus[i] != prevStatus[i])
     {
       manager_statsTransitionPolicy(i,prevStatus[i],curStatus[i]);
@@ -370,17 +509,26 @@ void manager_nodeStatusCheck(unsigned long diff)
     val  = DHT.humidity;
     curStatus[HUMIDITY]=val;
   }
+  if (boardConfig[AUTOLIGHTOFF])
+  { 
+    val  = autoLightOffTime;
+    curStatus[AUTOLIGHTOFF]=val;
+  }
+  if (boardConfig[AUTOALARMON])
+  { 
+    val  = autoAlarmOnTime;
+    curStatus[AUTOALARMON]=val;
+  }
 }
-
-
 
 void manager_statsTransitionPolicy(int name_idx,int prev, int cur)
 {
-  
-#ifdef MAIL_BOX
-      if (name_idx == PROXMITY && prev == VACANT && cur == OCCUPIED)
-          command_sendMessage("toast", "info","New mail is arrived");
-#endif      
+      if (manager_IsHouse() == false)
+      {
+        if (name_idx == PROXIMITY && prev == VACANT && cur == OCCUPIED)
+            command_sendMessage("toast", "info","New mail is arrived");
+        return;
+      }     
       
      if (name_idx == DOOR && prev == CLOSE && cur == OPEN && curStatus[ALARM] == ON)
          command_sendMessage("toast", "warn", "The door is opened manually.");
@@ -391,7 +539,7 @@ void manager_statsTransitionPolicy(int name_idx,int prev, int cur)
 
      if (name_idx == PROXIMITY && prev == OCCUPIED && cur == VACANT && curStatus[ALARM] == OFF)
      {
-         command_sendMessage("alert", "info", "Door opened! But alarm is not ON.");
+         command_sendMessage("alert", "info", "The house is vacant, but alarm is off");
          autoAlarmOnStart = true;
      }
 #if 0     
@@ -477,7 +625,7 @@ void manager_initialization(void)
     return ;
 
     command_executeControl("alarm","off");
-    command_executeControl("led","off");
+    command_executeControl("light","off");
     command_executeControl("door","close");
     
     snprintf(topicPrefix,sizeof(topicPrefix), "/%s/%s", TOPIC_CLASS, NODE_NAME);
@@ -488,71 +636,12 @@ void manager_initialization(void)
 /********************************************************************************************
 Arduino Porting
 *********************************************************************************************/
-WiFiClient wifiHttpClient;
 
-byte postPage(char* domainBuffer,int thisPort,char* page,char* thisData)
-{
-  int  i, nretry = 10000, ret;
-  int inChar;
-  char outBuf[64];
-  
-  Serial.print(F("connecting..."));
-
-
-  for ( i = 0 ; i < nretry ;i ++)
-  {
-    if ((ret = wifiHttpClient.connect(domainBuffer,thisPort)) == 1)
-          break;
-  }
-  if(ret)
-  {
-    Serial.println(F("connected"));
-
-    // send the header
-    sprintf(outBuf,"POST %s HTTP/1.1",page);
-    wifiHttpClient.println(outBuf);
-    sprintf(outBuf,"Host: %s",domainBuffer);
-    wifiHttpClient.println(outBuf);
-    wifiHttpClient.println(F("Connection: close\r\nContent-Type: application/json\r\nx-client-id:75f9e675-9db4-4d02-b523-37521ef656ea"));
-    sprintf(outBuf,"Content-Length: %u\r\n",strlen(thisData));
-    wifiHttpClient.println(outBuf);
-
-    // send the body (variables)
-    wifiHttpClient.print(thisData);
-  } 
-  else
-  {
-    Serial.println(F("failed"));
-    return 0;
-  }
-  
-  int connectLoop = 0;
-
-  while(wifiHttpClient.connected())
-  {
-    while(wifiHttpClient.available())
-    {
-      inChar = wifiHttpClient.read();
-      Serial.write(inChar);
-      connectLoop = 0;
-    }
-
-    delay(1);
-    connectLoop++;
-    if(connectLoop > 10000)
-    {
-      Serial.println();
-      Serial.println(F("Timeout"));
-      wifiHttpClient.stop();
-    }
-  }
-  Serial.println();
-  Serial.println(F("disconnecting."));
-  wifiHttpClient.stop();
-  return 1;
-}
 
 void setup() {
+  int i =0 ;
+  int nretry = 5;
+  int result; 
   String payload;
   Serial.begin(115200);
   myservo.attach(ServoPin);                     // Attach to servo
@@ -566,17 +655,14 @@ void setup() {
   
   // Print connection information to the debug terminal
   printConnectionStatus();
-
+  managere_scanNode();
+  
+  Serial.print("webServer Connecting to ");
+  command_createSANode();
+  
   Serial.print("Connecting to ");
   Serial.println(MQTT_SERVER);
   
-  protocol_getPayloadOfCreateNodeID(payload);
-  
-  postPage("54.166.26.101",8000,"/session/createNode",(char *)payload.c_str());
-  
-  int i =0 ;
-  int nretry = 5;
-  int result; 
   for ( i = 0 ;i < 5 ; i ++)
   {
     result = client.connect(MQTT_CLIENT_ID);
@@ -605,7 +691,15 @@ void setup() {
 }
 
 void loop() {
-
+  static boolean bInit = false;
+  
+  if (bInit == false)
+  {
+    manager_nodeStatusCheck(UPDATE_PERIODIC_TIME);
+    command_postQuery();
+    bInit=true;
+  }
+  
   client.loop();
   
   command_postQuery();

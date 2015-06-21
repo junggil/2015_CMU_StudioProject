@@ -30,9 +30,18 @@ public class ModelSubscribe extends java.util.Observable {
 	public void addNewNode(SANode e) {
 		nodeList.add(e);
 		
-		setChanged();
-		notifyObservers(nodeList);
+		//setChanged();
+		//notifyObservers(nodeList);
 	}
+	
+	public void setPleaseAddSub(int idx, boolean b) {
+		nodeList.get(idx).setAddSub(b);
+	}
+	
+	public boolean getPleaseAddSub(int idx) {
+		return nodeList.get(idx).getAddSub();
+	}
+	
 	
 	public void addNewSensorActuator(String nodeId, SensorActuator sa) {
 		for(int i=0; i < nodeList.size(); i++) {
@@ -190,5 +199,9 @@ public class ModelSubscribe extends java.util.Observable {
 		
 		setChanged();
 		notifyObservers(nodeList);
+	}
+	
+	public boolean isMyOwnNode(int idx) {
+		return nodeList.get(idx).getOwner();
 	}
 }

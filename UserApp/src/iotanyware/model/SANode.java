@@ -13,6 +13,8 @@ public class SANode {
 	boolean hasInfo;
 	boolean isAlert;
 	
+	boolean pleaseAddSub;
+	
 	List<SensorActuator> saList;
 	
 	public SANode() {
@@ -23,6 +25,7 @@ public class SANode {
 		
 		hasInfo = false;
 		isAlert = false;
+		pleaseAddSub = false;
 	}
 	
 	public SANode(String strid, String strname, boolean own) {
@@ -33,6 +36,7 @@ public class SANode {
 		
 		hasInfo = false;
 		isAlert = false;
+		pleaseAddSub = false;
 	}
 	
 	public void setNotificationMessage(String info) {
@@ -42,6 +46,13 @@ public class SANode {
 	
 	public void setAlert(boolean b) {
 		isAlert = b;
+	}
+	
+	public void setAddSub(boolean b) {
+		pleaseAddSub = b;
+	}
+	public boolean getAddSub() {
+		return pleaseAddSub;
 	}
 	
 	public boolean getAlert() {

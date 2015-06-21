@@ -31,6 +31,32 @@ public class NodeControl implements State {
 			view.setSaIndex(0);
 			view.setStatus(view.getNodeStatus());
 		}
+		else {
+			if(saName.matches("autoalarmon") || saName.matches("autolightoff")) {
+				if(topicId.matches("alarm on")) {
+					System.out.println("alram is on!!!!!!!!!!!!!!!!!!!!!!!!");
+					return;
+				}
+				
+				String topic = topicId + "/control";
+				
+				JSONObject jsonObj = new JSONObject();
+				jsonObj.put("publisher", view.getUserEmail());
+				jsonObj.put("name", saName);
+				jsonObj.put("value", String.valueOf(number));
+				
+				StringWriter toStr = new StringWriter();
+				try {
+					jsonObj.writeJSONString(toStr);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+				String payload = jsonObj.toString();
+				view.publishMessage(topic, payload, 0);
+			}
+		}
 	}
 
 	@Override
@@ -38,6 +64,11 @@ public class NodeControl implements State {
 		// TODO Auto-generated method stub
 		
 		//if you need to check the input string, please compare to validStr
+		
+		if(topicId.matches("alarm on")) {
+			System.out.println("alram is on!!!!!!!!!!!!!!!!!!!!!!!!");
+			return;
+		}
 		
 		String topic = topicId + "/control";
 		
@@ -62,6 +93,8 @@ public class NodeControl implements State {
 	public void updateState(ModelSubscribe model) {		
 		// TODO Auto-generated method stub
 		view.textPane.setText("");
+		
+		topicId = "";
 		
         String initString[] =
             { "Node Control of ",
@@ -110,12 +143,19 @@ public class NodeControl implements State {
         
         view.textPane.append(view.newline);  
         
-        //show the how to input.
-        topicId = "/sanode/" + model.getNodeId(view.getNodeIndex());
-        saName = model.getSensorActuatorName(view.getNodeIndex(), findControlTarget);
-		validStr = model.getSensorActuatorProfile(view.getNodeIndex(), findControlTarget);
-        view.textPane.append( "Is new value  " + validStr + "?" + view.newline);
-        
-        view.textPane.append("\nIf OK, current status will be changed new one" + view.newline);
+        int alarmIdx = model.findSensorActuatorIndex("alarm", view.getNodeIndex());
+        if((alarmIdx != findControlTarget) && (model.getSensorActuatorValue(view.getNodeIndex(), alarmIdx).matches("on")) ) {
+        	view.textPane.append( "\n\nPlease off the alarm  first!!!" + view.newline);
+        	topicId = "alarm on";
+        }
+        else {
+	        //show the how to input.
+	        topicId = "/sanode/" + model.getNodeId(view.getNodeIndex());
+	        saName = model.getSensorActuatorName(view.getNodeIndex(), findControlTarget);
+			validStr = model.getSensorActuatorProfile(view.getNodeIndex(), findControlTarget);
+	        view.textPane.append( "Is new value  " + validStr + "?" + view.newline);
+	        
+	        view.textPane.append("\nIf OK, current status will be changed new one" + view.newline);
+        }
 	}
 }

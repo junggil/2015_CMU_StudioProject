@@ -12,6 +12,7 @@ public interface ServerInterface {
     
     public abstract boolean setLogConfig(String sessionid, int loggingHour);
     public abstract int getLogConfig(String sessioinid);
+    public boolean sharingUser(String sessionid, String nodeid, String user);
     
     public abstract String viewLog(String sessioinid);
 }

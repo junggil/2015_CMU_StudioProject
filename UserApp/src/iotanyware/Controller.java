@@ -33,13 +33,12 @@ public class Controller implements KeyListener, MqttCallback {
 	
 	String notifyStr = "";
 	
-	private String broker = "tcp://broker.mqttdashboard.com:1883";
+	//private String broker = "tcp://broker.mqttdashboard.com:1883";
+	private String broker =  "tcp://54.166.26.101:1883";
 	
 	private MqttClient client;
 	private HTTPServerAdapter httpserver;
 	
-	private String uuid;
-
 	public void addModel(ModelSubscribe m){
 		System.out.println("Controller: adding model");
 		this.node = m;
@@ -192,13 +191,18 @@ public class Controller implements KeyListener, MqttCallback {
 				System.out.println("remove node sn = " + str[0] + ".");
 				node.removeNodeById(str[0]);
 				
-				try {
-					client.unsubscribe("/node/"+ str[0] + "/status");
-					client.unsubscribe("/node/"+ str[0] + "/notify");
-				} 
-				catch (MqttException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+				synchronized(client) {
+					try {
+						System.out.println("--------------- /sanode/"+ str[0] + "/status");
+						System.out.println("--------------- /sanode/"+ str[0] + "/notify");
+						client.unsubscribe("/sanode/"+ str[0] + "/status");
+						client.unsubscribe("/sanode/"+ str[0] + "/notify");
+					} 
+					catch (MqttException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+						System.out.println("--------------- MqttException");
+					}
 				}
 				
 				view.addText("Success!!!\n");
@@ -308,12 +312,15 @@ public class Controller implements KeyListener, MqttCallback {
 	}
 	
 	public void addSubscribeTopic(String topic) {
-		try{
-			System.out.println("addSubscribeTopic = " + topic);
-			client.subscribe(topic);			
-		} catch (MqttException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		synchronized(client){
+			try{
+				
+				System.out.println("addSubscribeTopic = " + topic);
+					client.subscribe(topic);
+			} catch (MqttException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 
@@ -331,33 +338,37 @@ public class Controller implements KeyListener, MqttCallback {
 	@Override
 	public void messageArrived(String arg0, MqttMessage arg1) throws Exception {
 		// TODO Auto-generated method stub
-		System.out.println("Topic is     :" + arg0);
-		System.out.println("Contents is  :" + arg1.toString());
-		
-		String[] topicStack = arg0.split("/");
-		
-		System.out.println("Topic 1     :" + topicStack[0]);
-		System.out.println("Topic 2     :" + topicStack[1]);
-		System.out.println("Topic 3     :" + topicStack[2]);
-		System.out.println("Topic 4     :" + topicStack[3]);
-				
-		if( topicStack.length > 3) {
-			if(topicStack[3].matches("status")) {
-				System.out.println("SA Node(" + topicStack[0] + ") status was updated");
-				messageParse(topicStack[2], arg1.toString());
+		synchronized(client) {
+			System.out.println("Topic is     :" + arg0);
+			System.out.println("Contents is  :" + arg1.toString());
+			
+			String[] topicStack = arg0.split("/");
+			
+			System.out.println("Topic 1     :" + topicStack[0]);
+			System.out.println("Topic 2     :" + topicStack[1]);
+			System.out.println("Topic 3     :" + topicStack[2]);
+			System.out.println("Topic 4     :" + topicStack[3]);
+					
+			if( topicStack.length > 3) {
+				if(topicStack[3].matches("status")) {
+					System.out.println("SA Node(" + topicStack[0] + ") status was updated");
+					messageParse(topicStack[2], arg1.toString());
+				}
+				else if(topicStack[3].matches("notify")) {
+					System.out.println("SA Node(" + topicStack[0] + ") information arrived");
+					notificationParse(topicStack[2], arg1.toString());
+				}
+				else if(topicStack[3].matches("heartbeat")) {
+					progressHeartbeat(arg1.toString());
+					node.triggerViewUpdate();
+				}
+				else if(topicStack[3].matches("register")) {
+					progressRegisterNotify(arg1.toString());
+				}
 			}
-			else if(topicStack[3].matches("notify")) {
-				System.out.println("SA Node(" + topicStack[0] + ") information arrived");
-				notificationParse(topicStack[2], arg1.toString());
-			}
-			else if(topicStack[3].matches("heartbeat")) {
-				progressHeartbeat(arg1.toString());
-				node.triggerViewUpdate();
-			}
-			else if(topicStack[3].matches("register")) {
-				progressRegisterNotify(arg1.toString());
-			}
-		}			
+			
+			System.out.println("++++++++++++++++++++++++++++END+++++++++++++++++++++++++++++");
+		}
 	}
 	
 	public void progressRegisterNotify(String jsonmsg) {
@@ -368,12 +379,16 @@ public class Controller implements KeyListener, MqttCallback {
 			System.out.println( jsonObject.get("nickName") ); 	//nodeName
 			System.out.println( jsonObject.get("owner") ); 		//nodeOwner
 			
-			SANode san;		
-			san = new SANode((String)jsonObject.get("node"), (String)jsonObject.get("nickName"), (boolean)jsonObject.get("owner"));	
+			SANode san;	
+			san = new SANode((String)jsonObject.get("node"), (String)jsonObject.get("nickName"), (boolean)jsonObject.get("owner"));
 			node.addNewNode(san);
+			int idx = node.findNodeIndexById((String)jsonObject.get("node"));
+			node.setPleaseAddSub(idx, true);
 			
+			/*
 			addSubscribeTopic("/sanode/"+ jsonObject.get("node") +"/status");
 			addSubscribeTopic("/sanode/"+ jsonObject.get("node") +"/notify");
+			*/
 			
 			if(view.getStatus() == view.getNodeRegister()) {
 				view.addText("\nSA Node Registeration Success!!!\n");
@@ -392,12 +407,17 @@ public class Controller implements KeyListener, MqttCallback {
 			System.out.println( jsonObject.get("nickName") ); 	//nodeName
 			System.out.println( jsonObject.get("status") ); 	//nodeName
 			
+			String status = (String)jsonObject.get("status");
+			if(status.matches("on")) {
+				return;
+			}
+			
 			int nodeIdx = node.findNodeIndexById((String)jsonObject.get("node"));
 			int saNum = node.getSensorActuatorNum(nodeIdx);
 			for( ; saNum > 0; saNum--) {
 				//TODO remove node list
 				node.removeSensorActuator(nodeIdx, saNum-1);
-			}			
+			}
 		}
 		catch (ParseException e) {
 			e.printStackTrace();
@@ -461,7 +481,8 @@ public class Controller implements KeyListener, MqttCallback {
 				System.out.println( nodeObj.get("owner") ); 	//nodeOwner
 				
 				SANode san;		
-				san = new SANode((String)nodeObj.get("node"), (String)nodeObj.get("nickName"), (boolean)nodeObj.get("owner"));
+				boolean b = (boolean)nodeObj.get("owner");
+				san = new SANode((String)nodeObj.get("node"), (String)nodeObj.get("nickName"), b);
 				node.addNewNode(san);
 				
 				addSubscribeTopic("/sanode/"+ nodeObj.get("node") +"/status");

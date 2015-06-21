@@ -32,6 +32,14 @@ public class SensorActuator {
 			saProfile = "on or off";
 			canControl = true;
 		}
+		else if(saName.startsWith("autoalarmon")) {
+			saProfile = "10 ~ 60000";
+			canControl = true;
+		}
+		else if(saName.startsWith("autolightoff")) {
+			saProfile = "5 ~ 60";
+			canControl = true;
+		}
 	}
 	
 	public void setSaName(String name) {

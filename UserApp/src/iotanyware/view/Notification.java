@@ -105,7 +105,7 @@ public class Notification implements State {
 			if(model.hasMessage(i)) {
 				view.textPane.append(" [" + model.getNodeName(i) + "] " + model.getNotificationMsg(i) + view.newline);
 				if(model.isAlertMsg(i)) {
-					moreInfo = "\n [Alert] Do you want to enable the alarm? [yes/no]\n";
+					moreInfo = "\n [Alert] Do you want to set the alarm? [yes/no]\n";
 					nodeId = model.getNodeId(i);
 				}
 			}
