@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en" data-ng-app="iotAnyware">
+<head>
+<meta charset="utf-8">
+    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.3.13/angular.js"></script>
+    <script src="//angular-ui.github.io/bootstrap/ui-bootstrap-tpls-0.13.0.js"></script>
+    <script src="/static/mqttws31.js"></script>
+    <script src="/static/app.js"></script>
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    <link href="//fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="/static/app.css">
+</head>
+<body ng-controller="SAnodeCtrl as nodeCtrl">
+    <div>
+        <div class="col-md-4 solid-line" ng-repeat="node in nodeCtrl.nodes">
+            <h3><i class="material-icons md-48">router</i> [[node.nickName]] </h3>
+            <accordion id="[[node.node]]">
+                <accordion-group heading="Show/Hide Sensor Information" is-open="true">
+                    <div id="[[node.node]]-[[key]]" class="status-group-item" ng-repeat="(key, val) in node.status">
+                        [[key]] : [[val]]
+                    </div>
+                </accordion-group>
+            </accordion>
+        </div>
+    </div>
+</body>
+</html>

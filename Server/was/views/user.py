@@ -68,13 +68,18 @@ def registerNode():
 @db_session
 def unregisterNode():
     try:
-        nodeId = request.get_json()['nodeId']
-        node = Node[nodeId]
+        params = request.get_json()
+        sessionOwner = Session[params['session']].sessionOwner
+        nodeId = params['nodeId']
 
-        if node.virtual:
-            vnode.del_vnode(nodeId)
-
-        node.delete()
+        registerNode = RegisteredNode.get(user=sessionOwner, node=nodeId)
+        if registerNode.owner:
+            node = Node[nodeId]
+            if node.virtual:
+                vnode.del_vnode(nodeId)
+            node.delete()
+        else:
+            registerNode.delete();
         db.commit()
         return jsonify({'statusCode': 200, 'result': {}})
     except ObjectNotFound:
@@ -87,10 +92,14 @@ def unregisterNode():
 @db_session
 def shareNode():
     try:
-        sessionOwner = Session[request.get_json['session']].sessionOwner
-        nodeId = request.get_json()['nodeId']
+        params = request.get_json()
+        sessionOwner = Session[params['session']].sessionOwner
+        nodeId = params['nodeId']
         nickName = RegisteredNode.get(owner=True, node=nodeId).nickName
-        RegisteredNode(owner = False, nickName = nickName, user = request.get_json()['targetUser'], node = nodeId)
+        if RegisteredNode.get(user=params['targetUser'], node=nodeId):
+            return jsonify({'statusCode': 400, 'result': 'Already registered node'})
+
+        session.add_relation_node_to_user(nodeId, nickName, params['targetUser'], is_owner=False)
         db.commit()
         return jsonify({'statusCode': 200, 'result': {}})
     except ObjectNotFound:
@@ -106,6 +115,9 @@ def transferOwner():
         sessionOwner = Session[request.get_json()['session']].sessionOwner
         nodeId = request.get_json()['nodeId']
         prev_owner = RegisteredNode.get(owner=True, node=nodeId)
+
+        if prev_owner.user.email != sessionOwner:
+            return jsonify({'statusCode': 400, 'result': 'Permission denied'})
         prev_owner.owner = False
         RegisteredNode(owner = True, nickName = prev_owner.nickName, user = request.get_json()['targetUser'], node = nodeId)
         db.commit()

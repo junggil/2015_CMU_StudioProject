@@ -9,16 +9,15 @@ VNODE_LIST = {}
 def init_vnode_list():
     for node in Node.select(lambda x:x.virtual):
         add_vnode(node.nodeId)
-    print(VNODE_LIST)
 
 def get_vnode_profiles():
     return {
-        'alarm'      : {'profile':'com.genetic.alarm',      'value':'off'},
-        'door'       : {'profile':'com.genetic.door',       'value':'close'},
-        'humidity'   : {'profile':'com.genetic.humidity',   'value':23},
-        'light'      : {'profile':'com.genetic.light',      'value':'off'},
-        'proximity'  : {'profile':'com.genetic.proximity',  'value':'vacant'},
-        'thermostat' : {'profile':'com.genetic.thermostat', 'value':21},
+        'alarm': 'off',
+        'door': 'close',
+        'humidity': 23,
+        'light': 'off',
+        'proximity': 'vacant',
+        'thermostat': 21,
     }
 
 def add_vnode(nodeId):
