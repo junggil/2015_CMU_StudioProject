@@ -15,8 +15,6 @@ def update_last_heartbeat(client, userdata, message):
     try:
         nodeId, msg_type = message.topic.split('/')[2:4]
         node = Node[nodeId] 
-        if not node.lastHeartBeat:
-            _publish_node_status_change(node, is_disconnected = False)
         node.lastHeartBeat = datetime.now()
         db.commit()
     except ObjectNotFound:

@@ -29,7 +29,7 @@ def registerNewUser():
         PendingRequestUser(**parameters)
         db.commit()
         smtp.sendConfirmMail(parameters['email'], parameters['nickName'], url)
-        return jsonify({'statusCode': 200, 'result': {}})
+        return jsonify({'statusCode': 200, 'result': 'Check your mailbox to email confirmation'})
     except ValueError:
         return jsonify({'statusCode': 400, 'result': 'Invalid email: %s' % request.get_json()['email']})
 

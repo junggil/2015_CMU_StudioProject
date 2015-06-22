@@ -23,10 +23,11 @@ def _hide_privates(session):
         del(session[key])
     return session
 
-def add_relation_node_to_user(nodeId, nickName, user, is_virtual=False):
-    Node(nodeId = nodeId, virtual=is_virtual)
-    RegisteredNode(owner = True, nickName = nickName, user = user, node = nodeId)
-    client.publish('/user/%s/register' % user, json.dumps({'node': nodeId, 'nickName': nickName, 'owner': True}))
+def add_relation_node_to_user(nodeId, nickName, user, is_virtual=False, is_owner=True):
+    if not Node.get(nodeId = nodeId, virtual=is_virtual):
+        Node(nodeId = nodeId, virtual=is_virtual)
+    RegisteredNode(owner = is_owner, nickName = nickName, user = user, node = nodeId)
+    client.publish('/user/%s/register' % user, json.dumps({'node': nodeId, 'nickName': nickName, 'owner': is_owner}))
 
 @app.route('/session/createUser', methods=['POST'])
 @auth.is_valid_client()

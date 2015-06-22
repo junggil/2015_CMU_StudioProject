@@ -14,10 +14,13 @@ def search_db(userId):
                                       if reg.user.email == userId)]
     for post in mongodb.search_db({'timestamp': {'$gte': datetime.now() - timedelta(hours=loggingHour), '$lt': datetime.now()},
                                         'node': {'$in': registeredNode}}):
-        val = dict(post)
-        del val['_id']
-        val['msg'] = json.loads(val['msg'])
-        yield val
+        try:
+            val = dict(post)
+            del val['_id']
+            val['msg'] = json.loads(val['msg'])
+            yield val
+        except ValueError:
+            pass
 
 @app.route('/log/getHistory', methods=['GET'])
 @args.is_exists(body=['session'])
