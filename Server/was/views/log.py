@@ -1,4 +1,5 @@
 import json
+import psutil
 from was import app
 from was.models import *
 from was.decorators import args, auth
@@ -18,6 +19,7 @@ def search_db(userId):
             val = dict(post)
             del val['_id']
             val['msg'] = json.loads(val['msg'])
+            val['timestamp'] = (val['timestamp'] - timedelta(hours=4)).strftime('%B %d %H:%M:%S')
             yield val
         except ValueError:
             pass
@@ -33,3 +35,7 @@ def getHistory():
         return jsonify({'statusCode': 200, 'result': list(search_db(sessionOwner))[::-1]})
     except ObjectNotFound:
         return jsonify({'statusCode': 400, 'result': 'Invalid profile name'})
+
+@app.route('/system/getUsage', methods=['GET'])
+def getUsage():
+    return jsonify({'cpu': psutil.cpu_percent(), 'mem': psutil.virtual_memory().percent})

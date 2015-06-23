@@ -7,16 +7,27 @@
 
       var self = this;
       self.nodes = {}; 
+      self.logs = [];
+
+      $scope.currentPage = 1;
+      $scope.pageSize = 15;
 
       client = new Paho.MQTT.Client('54.166.26.101', 8080, '/', 'myclientid_' + parseInt(Math.random() * 100, 10))
       client.onMessageArrived = onMessageArrived;
       client.connect({onSuccess:onConnect});
 
-      self.highlight = function(id) {
-        angular.element(document. querySelector(id)).addClass('status-changed');
-        setTimeout(function() {
-            angular.element(document. querySelector(id)).removeClass('status-changed');
-        }, 800);
+      $scope.isEmptyObject = function(obj) {
+          return Object.keys(obj).length == 0;
+      };
+
+      $scope.getIconName = function(key, val) {
+          var icon = {light: 'wb_incandescent', door: 'lock_open', thermostat: 'equalizer', 
+                      proximity: 'place', humidity: 'loyalty', alarm: 'security'}[key] || 'check';
+          return val == 'close' ? 'lock' : icon;
+      };
+
+      $scope.isActiveValue = function(val) {
+          return $.inArray(val, ['off', 'close', 'vacant']) < 0;
       };
 
       function onMessageArrived(message) {
@@ -24,10 +35,12 @@
         if (self.nodes[nodeId]){
             angular.forEach(JSON.parse(message.payloadString), function(val, key) {
                 self.nodes[nodeId].status[key] = val;
-                self.highlight('#'+nodeId+'-'+key);
             });
+            self.logs.unshift({timestamp: (new Date()).strftime('%B %d %H:%M:%S'), node: nodeId,
+                               msg_type: message.destinationName.split('/')[3], msg: message.payloadString});
             $scope.$apply();
         }
+        console.log(message.payloadString);
       }
 
       function onConnect() {
@@ -45,10 +58,24 @@
                 });
             }
         });
+        $http({url:'/log/getHistory?session=' + $scope.token, method:'GET', 
+                    headers: {'Content-type': 'application/json', 'x-client-id': $scope.clientId}}).then(function (res) {
+            if (res.data.statusCode === 200) {
+                self.logs = res.data.result;
+                console.log(self.logs.length);
+            }
+        });
      }
   }])
   .config(function($interpolateProvider) {
       $interpolateProvider.startSymbol('[[');
       $interpolateProvider.endSymbol(']]');
-  });
+  })
+  .filter('startFrom', function() {
+    return function(input, start) {
+        start = +start; //parse to int
+        return input.slice(start);
+    }
+});
+
 })();

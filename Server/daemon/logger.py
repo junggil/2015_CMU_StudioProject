@@ -7,5 +7,6 @@ def db_logging(client, userdata, message):
     post = {'node': node, 'timestamp': datetime.now(), 'msg_type': msg_type, 'msg': str(message.payload, 'utf-8')}
     mongodb.insert_db(post)
 
+client.message_callback_add('/sanode/+/query', db_logging)
 client.message_callback_add('/sanode/+/status', db_logging)
 client.message_callback_add('/sanode/+/control', db_logging)
