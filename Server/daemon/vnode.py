@@ -34,9 +34,9 @@ def add_vnode(nodeId):
     def _response_control(client, userdata, message):
         global VNODE_LIST
         try:
-            key, value = tuple(json.loads(str(message.payload, 'utf-8')).items())[0]
-            VNODE_LIST[nodeId][key]['value'] = value
-            client.publish('/sanode/'+nodeId+'/status', json.dumps({key: value}))
+            msg = json.loads(str(message.payload, 'utf-8'))
+            VNODE_LIST[nodeId][msg['name']] = msg['value']
+            client.publish('/sanode/'+nodeId+'/status', json.dumps({msg['name']:msg['value']}))
         except (KeyError, ValueError):
             pass
 
@@ -46,8 +46,8 @@ def add_vnode(nodeId):
 
 @db_session
 def del_vnode(nodeId):
+    global VNODE_LIST
     if VNODE_LIST.get(nodeId):
-        global VNODE_LIST
         client.unsubscribe('/sanode/%s/query' % nodeId)
         client.unsubscribe('/sanode/%s/control' % nodeId)
         del VNODE_LIST[nodeId]
