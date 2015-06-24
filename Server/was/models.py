@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from pony.orm import Optional, Required, Set, PrimaryKey
 
 class User(db.Entity):
-    email        = PrimaryKey(str, py_check=lambda val:re.match(r'[^@]+@[^@]+\.[^@]+', val))
+    email        = PrimaryKey(str, py_check=lambda val:re.match(r'[^@]+@[^@]+\.[^@]+', val) and len(val) >= 6)
     nickName     = Required(str)
     password     = Required(str)
     mobileNumber = Optional(str, nullable=True)

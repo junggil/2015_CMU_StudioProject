@@ -13,6 +13,7 @@
     <link href="/static/css/bootstrap.min.css" rel="stylesheet">
 
     <!-- Custom CSS -->
+    <link href="/static/css/angular-ui-notification.min.css" rel="stylesheet">
     <link href="/static/css/grayscale.css" rel="stylesheet">
 
     <!-- Custom Fonts -->
@@ -53,7 +54,7 @@
                         <a class="page-scroll" href="#logs">Logs</a>
                     </li>
                     <li>
-                        <a class="page-scroll" href="#settings">Settings</a>
+                        <a class="page-scroll" href="#about">About</a>
                     </li>
                 </ul>
             </div>
@@ -80,10 +81,22 @@
     <!-- Devices Section -->
     <section id="devices" class="container content-section text-center" ng-hide="isEmptyObject(nodeCtrl.nodes)">
         <div id="[[node.nickName]]" class="row" ng-repeat="node in nodeCtrl.nodes">
-            <div class="col-lg-8 col-lg-offset-2">
-                <h2><i class="material-icons col-sub">router</i> [[node.nickName]]</h2>
+            <div class="col-lg-8 col-lg-offset-2" ng-hide="isEmptyObject(node.status)">
+                <h2 ng-click="toggleCollapse(node.node)"><i class="material-icons col-sub">router</i> [[node.nickName]]<i class="material-icons">[[checkCollapse(node.node) ? "expand_less" : "expand_more"]]</i></h2>
                 <!-- Sensor / Actuator -->
-                <div class="col-lg-4 box-border" ng-repeat="(key,val) in node.status">
+                 <div class="config-node" collapse="!checkCollapse(node.node)">
+                     <div>
+                        <div class="col-md-6">
+                             <input type="email" id="shareNodeId" ng-model="nodeConfig[node.node]" class="form-control" placeholder="Email address of recipient" required autofocus>
+                        </div>
+                        <div class="col-md-6">
+                            <button type="button" class="btn btn-primary" ng-click="shareNode(node.node)" ng-disabled="!nodeConfig[node.node] || !node.owner">Share</button>
+                            <button type="button" class="btn btn-info" ng-click="transferNode(node.node)" ng-disabled="!nodeConfig[node.node] || !node.owner">Transfer</button>
+                            <button type="button" class="btn btn-danger" ng-click="unregisterNode(node.node)">Unregister</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 box-border" ng-repeat="(key,val) in node.status" ng-click="toggleSwitch(node.node, key, val)">
                     <i class="material-icons col-main" ng-class="{'inactive': !isActiveValue(val)}">[[getIconName(key, val)]]</i>
                     <div class="sensor-status"> 
                         <div class="sensor-status-key">
@@ -107,21 +120,26 @@
                 <div class="row no-log" ng-hide="nodeCtrl.logs.length > 0">
                     <p> No logs are here. How about one more try? :)</p>
                 </div>
-                <div class="row single-log" ng-repeat="log in nodeCtrl.logs | startFrom:(currentPage-1)*pageSize | limitTo:pageSize">
+                <div class="row single-log" ng-repeat="log in nodeCtrl.logs | filter:search | startFrom:(currentPage-1)*pageSize | limitTo:pageSize">
                     <div class="col-lg-2 time">[[log.timestamp]]</div>
                     <div class="col-lg-1 nodeId">[[log.node]]</div>
                     <div class="col-lg-1 msgType">[[log.msg_type]]</div>
                     <div class="col-lg-8 text-left msg">[[log.msg]]</div>
                 </div>
                 <div class="row pagenation" ng-show="nodeCtrl.logs.length > 0">
-                    <pagination total-items="nodeCtrl.logs.length" items-per-page="pageSize" ng-model="currentPage"></pagination>
+                    <div class="col-lg-4 col-lg-offset-4">
+                        <input class="form-control" ng-model="search" placeholder="Enter your search " />
+                    </div>
+                    <div class="col-lg-8 col-lg-offset-2">
+                        <pagination max-size="9" total-items="nodeCtrl.logs.length" items-per-page="pageSize" ng-model="currentPage"></pagination>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Settings Section -->
-    <section id="settings" class="container content-section text-center">
+    <!-- About Section -->
+    <section id="about" class="container content-section text-center">
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2">
                 <h2>About IoT Anyware</h2>
@@ -137,6 +155,7 @@
         <!-- Modal -->
         <div class="modal fade" id="registerModal" tabindex="-1" role="dialog">
           <div class="modal-dialog" role="document">
+            <form name="registerNodeForm" novalidate>
             <div class="modal-content">
               <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
@@ -149,7 +168,7 @@
                               <h5> Serial Number </h5>
                           </div>
                           <div class="col-md-8">
-                               <input type="text" name="nodeId" class="form-control" placeholder="Check the sticker label on the package box">
+                               <input type="text" id="registerNodeId" ng-model="registerNodeInfo.nodeId" class="form-control" placeholder="Check the sticker label on the package box" required autofocus>
                           </div>
                       </div>
                       <div class="row">
@@ -157,7 +176,7 @@
                               <h5> Display Name </h5>
                           </div>
                           <div class="col-md-8">
-                               <input type="text" name="nickName" class="form-control" placeholder="My Home">
+                               <input type="text" ng-model="registerNodeInfo.nickName" class="form-control" placeholder="My Home" required>
                           </div>
                       </div>
                       <div class="row">
@@ -165,18 +184,24 @@
                               <h5> Choose Type </h5>
                           </div>
                           <div class="col-md-8">
-                              <select class="form-control" name="virtual">
+                              <select class="form-control" ng-model="registerNodeInfo.virtual" ng-init="useVirtual">
                                   <option>Use Real Device</option>
                                   <option>Use Virtual Device</option>
                               </select>
                           </div>
                       </div>
+                      <div class="row" collapse="registerNode.$valid">
+                          <alert type="danger"  ng-hide="registerNodeForm.$valid && !alertMsg">[[alertMsg || "Invalid Form. Please Check Again."]]</alert>
+                          <alert type="success" ng-show="registerNodeForm.$valid && !alertMsg">Valid Form. Good to go! </alert>
+                      </div>
+                          
                   </div>
               </div>
               <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary">Submit</button>
+                <button type="button" class="btn btn-primary" ng-click="registerNode()" ng-disabled="!registerNodeForm.$valid">Submit</button>
               </div>
+            </form>
             </div>
           </div>
         </div>
@@ -211,6 +236,7 @@
     <script src="/static/js/strftime.js"></script>
 
     <!-- Custom Theme JavaScript -->
+    <script src="/static/js/angular-ui-notification.min.js"></script>
     <script src="/static/js/grayscale.js"></script>
     <script src="/static/js/app.js"></script>
 </body>

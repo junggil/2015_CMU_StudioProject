@@ -82,7 +82,7 @@ def unregisterNode():
             registerNode.delete();
         db.commit()
         return jsonify({'statusCode': 200, 'result': {}})
-    except ObjectNotFound:
+    except (ObjectNotFound, AttributeError):
         return jsonify({'statusCode': 400, 'result': 'Invalid nodeId'})
 
 @app.route('/user/shareNode', methods=['POST'])

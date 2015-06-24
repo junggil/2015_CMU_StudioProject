@@ -426,3 +426,21 @@ body {
 #logs .pagenation {
     padding-top:30px;
 }
+
+.highlighted { background: yellow }
+
+.ng-invalid {
+  border-color: red;
+}
+
+.ng-valid {
+    border-color: green;
+}
+
+.ui-notification {
+    font-family: Montserrat,"Helvetica Neue",Helvetica,Arial,sans-serif;
+}
+
+.config-node {
+    padding: 30px 0 120px 0;
+}
