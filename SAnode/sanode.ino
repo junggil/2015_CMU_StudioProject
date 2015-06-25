@@ -11,16 +11,25 @@
 
 
 /*********************************************************************************************
+ Configuration
+**********************************************************************************************/
+//#define  DEBUG
+#define LOCAL_SERVER
+//#define HOTEL_WIFI
+/*********************************************************************************************
  Define Macro and Enum
 **********************************************************************************************/
-
-#define LOCAL_SERVER
-
 #define DhtPin   8         // This #define defines the pin that will be used to get data 
                            // from the tempurature & humidity sensor.                            
 //#define MQTT_SERVER "iot.eclipse.org"
 #define MQTT_CLIENT_ID "SA_NODE01"
+
+#ifdef HOTEL_WIFI
+#define WIFI_SSID "Shadyside Inn"
+#define WIFI_PASS "hotel5405"
+#else
 #define WIFI_SSID "LGTeam1"
+#endif
 
 #ifdef LOCAL_SERVER
 #define MQTT_SERVER "54.166.26.101"
@@ -57,7 +66,11 @@
 #define AUTOALARMONTIME (30 * 1000)
 #define HEARTBEAT (10 * 1000) /* heartbeat */
 
-
+#define NODE_NAME_LEN  5
+#define BUF_LEN          24
+#define PROFILENAME_LEN  16
+#define TOPIC_CLASS     "sanode"
+#define NODE_NAME        nodeName
 /*********************************************************************************************
 Function Definition
 **********************************************************************************************/
@@ -74,20 +87,14 @@ int LightPin = 5;          // Pin that the corner light LED is connected to
 int AlarmPin = 3;          // Pin that the alarm inidicator LED is connected to
 int QtiPin = 6;            // The pin with QTI/proximity sensor
 // Callback function header
-char json[100];
 WiFiClient wifiClient;
-WiFiClient wifiHttpClient;
+#define wifiHttpClient wifiClient
+//WiFiClient wifiHttpClient;
 //PubSubClient client(MQTT_SERVER, 1883, callback, wifiClient);
 PubSubClient client(MQTT_SERVER, MQTT_SERVER_PORT, network_subscribeBUS, wifiClient);
-
-#define BUF_LEN          24
-#define TOPIC_CLASS     "sanode"
-
-#define NODE_NAME        nodeName
-
 boolean boardConfig[] = { true, true, true, true, true, true , true, true};
-char nodeName[BUF_LEN] ;
-
+char nodeName[NODE_NAME_LEN] ;
+char profileName[PROFILENAME_LEN];
 const char * names[] = { "door", "alarm", "light","proximity","thermostat","humidity", "autolightoff", "autoalarmon"};
 const char * values[][2] = { {"open","close"}, {"off","on"}, {"off","on"}, {"occupied","vacant"}};
 const char * subscribe_method[] = { "control", "query" };
@@ -95,7 +102,6 @@ char topicPrefix[BUF_LEN];
 unsigned long autoLightOffTime = AUTOLIGHTOFFTIME;
 unsigned autoAlarmOnTime = AUTOALARMONTIME;
 boolean  autoAlarmOnStart ;
-
 int prevStatus[MAX];
 int curStatus[MAX];
 
@@ -106,77 +112,61 @@ int curStatus[MAX];
 /*********************************************************************************************
   SA Protocol
 **********************************************************************************************/
-
-
-void protocol_getPayloadOfStatus(String name, String value, String &val) {
-  val = "{";
-  val+="\n";
-  val+="\"";
-  val+= name;
-  val+="\":";
-  val+="\"";
-  val+= value;
-  val+="\"";
-  val+="\n";
-  val+="}";
-}
-void protocol_getPayloadOfMessage (String type, String level, String message, String & payload){
-  payload = "{";
-  payload+="\n";
-  payload+="\"type\":";
-  payload+="\"";
-  payload+=type;
-  payload+="\",";
-  payload+="\n";  
-  payload+="\"";
-  payload+=level;
-  payload+="\":";
-  payload+="\"";
-  payload+=message;
-  payload+="\"";  
-  payload+="\n";
-  payload+="}";
-}
-void protocol_makeTopic(String Method, String & topic)
-{
-	topic+=String(topicPrefix);
-	topic+="/";
-	topic+=Method;
-}
-void protocol_getMethodFromTopic(String topic, String & method)
-{
-  char * temp = strchr(topic.c_str()+strlen(topicPrefix),'/')+1;
-  method = String(temp);
+void protocol_getPayloadOfStatus(const char * name, const char * value, char * payload, int len) {
+  snprintf(payload,len,"{\"%s\":\"%s\"}",name,value);  
 }
 
-void protocol_getPayloadOfCreateNodeID(String & payload)
+void protocol_getPayloadOfProfileHead(const char * name, char * payload, int len) {
+  snprintf(payload,len,"{\"profile\":\"%s\"}",name);
+}
+
+void protocol_getPayloadOfMessage (const char * type, const char * level, const char * message, char * payload, int len){
+#ifdef DEBUG
+  Serial.print("Free memory : ");
+  Serial.println(get_free_memory());
+#endif
+  snprintf(payload,len,"{\"type\":\"%s\",\"%s\":\"%s\"}",type,level,message);
+}
+void protocol_makeTopic(const char * method, char * topic, int len)
 {
-  payload = "{";
-  payload+="\"nodeId\":";
-  payload+="\"";
-  payload+= NODE_NAME;
-  payload+="\"";  
-  payload+="}";
-/* 
-  "{\"nodeId\":\"0001\"}"
-*/
+  snprintf(topic,len,"%s/%s",topicPrefix,method);
+}
+void protocol_getMethodFromTopic(const char * topic, char * method, int len)
+{
+  char * temp = (char *)topic + strlen(topicPrefix) + 1; 
+  strncpy(method,temp,len);
+}
+void protocol_getPayloadOfCreateNodeID(char * payload, int len)
+{
+  snprintf(payload,len,"{\"nodeId\":\"%s\"}", NODE_NAME);
 }
 /*********************************************************************************************
   SA Network
 **********************************************************************************************/
-void network_subscribeBUS(char* topic, byte* payload, unsigned int length) {
-  String method;
-  
-  StaticJsonBuffer<200> jsonBuffer;
+#define METHOD_BUF  16
+#define TOPIC_LEN  32
+#define JSON_BUF  48
 
+char json[JSON_BUF];
+void network_subscribeBUS(char* topic, byte* payload, unsigned int length) {
+  char method[METHOD_BUF];
+  StaticJsonBuffer<JSON_BUF> jsonBuffer;
   // Allocate the correct amount of memory for the payload copy
+#ifdef DEBUG
+  Serial.print("Free memory : ");
+  Serial.println(get_free_memory());
+#endif
+  if (length > sizeof(json))
+      Serial.println("json buffer overflow");    
+
   memcpy(json, payload, length);
   JsonObject& root = jsonBuffer.parseObject(json);
-  protocol_getMethodFromTopic(String(topic),method);
+  
+  protocol_getMethodFromTopic(topic,method,sizeof(method));
   
   Serial.println(topic);
 
-  if (strcmp("control", (char *)method.c_str()) == 0)
+  if (strcmp("control", (char *)method) == 0)
   {
     const char* name = root["name"];
     const char *value = root["value"];
@@ -185,28 +175,19 @@ void network_subscribeBUS(char* topic, byte* payload, unsigned int length) {
     
     command_executeControl((char *)name,(char *)value);
   }
-  else if (strcmp("query", (char *) method.c_str()) == 0)
+  else if (strcmp("query", (char *) method) == 0)
       command_executeQuery();
 }
 
 void network_publishBUS(char * method, char * payload)
 {
-   String topic;
-   protocol_makeTopic(String(method),topic);
+   char topic[TOPIC_LEN];
+   protocol_makeTopic(method,topic, sizeof(topic));
    
-   Serial.println(topic.c_str());
+   Serial.println(topic);
    Serial.println(payload);
    
-   client.publish((char *)topic.c_str(),payload);
-}
-void network_publishBUS2(char * method, byte * payload, int len)
-{
-   String topic;
-   protocol_makeTopic(String(method),topic);
-   
-   Serial.println(topic.c_str());
-   
-   client.publish((char *)topic.c_str(),payload,len);
+   client.publish(topic,payload);
 }
 
 byte network_postPage(char* domainBuffer,int thisPort,char* page,char* thisData)
@@ -215,8 +196,11 @@ byte network_postPage(char* domainBuffer,int thisPort,char* page,char* thisData)
   int inChar;
   char outBuf[64];
   
+#ifdef DEBUG
+  Serial.print("Free memory : ");
+  Serial.println(get_free_memory());
+#endif
   Serial.print(F("connecting..."));
-
 
   for ( i = 0 ; i < nretry ;i ++)
   {
@@ -226,16 +210,14 @@ byte network_postPage(char* domainBuffer,int thisPort,char* page,char* thisData)
   if(ret)
   {
     Serial.println(F("connected"));
-
     // send the header
-    sprintf(outBuf,"POST %s HTTP/1.1",page);
+    snprintf(outBuf,sizeof(outBuf),"POST %s HTTP/1.1",page);
     wifiHttpClient.println(outBuf);
-    sprintf(outBuf,"Host: %s",domainBuffer);
+    snprintf(outBuf,sizeof(outBuf),"Host: %s",domainBuffer);
     wifiHttpClient.println(outBuf);
     wifiHttpClient.println(F("Connection: close\r\nContent-Type: application/json\r\nx-client-id:75f9e675-9db4-4d02-b523-37521ef656ea"));
-    sprintf(outBuf,"Content-Length: %u\r\n",strlen(thisData));
+    snprintf(outBuf,sizeof(outBuf),"Content-Length: %u\r\n",strlen(thisData));
     wifiHttpClient.println(outBuf);
-
     // send the body (variables)
     wifiHttpClient.print(thisData);
   } 
@@ -245,6 +227,7 @@ byte network_postPage(char* domainBuffer,int thisPort,char* page,char* thisData)
     return 0;
   }
   
+  delay(10);
   int connectLoop = 0;
 
   while(wifiHttpClient.connected())
@@ -270,28 +253,74 @@ byte network_postPage(char* domainBuffer,int thisPort,char* page,char* thisData)
   wifiHttpClient.stop();
   return 1;
 }
-
+#define CLIENTID_LEN  16
+void network_eventBusConnect(boolean reConnect)
+{
+  int i =0 ;
+  int nretry = 5;
+  int result; 
+  char clientID[CLIENTID_LEN];
+  
+  snprintf(clientID,sizeof(clientID),"%s_xySAnode", NODE_NAME);
+  
+  if (reConnect)
+    client.disconnect();
+  
+  Serial.println(clientID);
+  Serial.println(MQTT_SERVER);
+  for ( i = 0 ;i < 5 ; i ++)
+  {
+    result = client.connect(clientID);
+   
+    if (result) {
+          Serial.println("Connected to MQTT broker");
+          break;
+    }
+    else {
+          Serial.println("MQTT connect failed");
+          Serial.println("Will reset and try again...");
+    }      
+  }
+  for ( i = 0 ; i < sizeof(subscribe_method)/sizeof(char *) ; i ++)
+  { 
+    char topic[BUF_LEN];
+    snprintf(topic, BUF_LEN, "%s/%s",topicPrefix, subscribe_method[i]);
+    Serial.println(topic);
+    
+    if (!client.subscribe(topic)){
+      Serial.println("fail to subscribe!");
+    }
+  }
+}
 /*********************************************************************************************
   SA Command
 **********************************************************************************************/
-void command_sendMessage( String type, String level, String message)
+#define VALUE_LEN  16
+#define COMMAN_BUF_SIZE  128
+#define PAYLOAD_LEN      128
+
+void command_sendProfileHead(void)
 {
-     String payload; 
-     protocol_getPayloadOfMessage(type, level,message,payload);
-     network_publishBUS("notify",(char *)payload.c_str());
+    char payload[PAYLOAD_LEN];   
+    protocol_getPayloadOfProfileHead(profileName,payload,sizeof(payload));
+    network_publishBUS("profile",payload);
+}
+
+void command_sendMessage( const char * type, const char * level, char * message)
+{
+     char payload[PAYLOAD_LEN];
+     protocol_getPayloadOfMessage(type, level,message,payload,sizeof(payload));
+     network_publishBUS("notify",payload);
 }
 
 void command_sendStatus(int name_idx, int value)
 {
-     char buf[20];
-     String strVal;
-     String payload; 
-     
-     manager_getValueString(name_idx,value,strVal);
-     protocol_getPayloadOfStatus(String(names[name_idx]), strVal,payload);
-     network_publishBUS("status",(char *)payload.c_str());
+     char cVal[VALUE_LEN]; 
+     char payload[PAYLOAD_LEN];
+     manager_getValueString(name_idx,value,cVal,sizeof(cVal));
+     protocol_getPayloadOfStatus(names[name_idx], cVal,payload, sizeof(payload));
+     network_publishBUS("status",payload);
 }
-
 
 void command_sendStatusAll(void)
 {
@@ -336,7 +365,6 @@ void command_postControl(void)
   }
 }
 
-
 void command_executeControl (char * name, char * value)
 {
    int name_idx = manager_getNameIdx(name);
@@ -371,30 +399,32 @@ void command_executeControl (char * name, char * value)
    curStatus[name_idx] = ivalue;
    executeControl = true;
 }
-
 void command_createSANode(void)
 {
-  String payload;
-  protocol_getPayloadOfCreateNodeID(payload);
-  network_postPage(WEB_SERVER,WEB_SERVER_PORT,"/session/createNode",(char *)payload.c_str());
+  char payload[PAYLOAD_LEN];
+  protocol_getPayloadOfCreateNodeID(payload, sizeof(payload));
+  Serial.println(payload);
+  network_postPage(WEB_SERVER,WEB_SERVER_PORT,"/session/createNode",payload);
 }
 /*********************************************************************************************
   SA Manager
 **********************************************************************************************/
 
-void managere_scanNode(void)
+void manager_scanNode(void)
 {
   if (manager_IsHouse())
-      snprintf(nodeName,BUF_LEN,"%s","0001");
+  {
+      snprintf(nodeName,sizeof(nodeName),"%s","0001");
+      snprintf(profileName,sizeof(profileName),"%s","house");
+  }
   else
   {
-      snprintf(nodeName,BUF_LEN,"%s","0002");
+      snprintf(nodeName,sizeof(nodeName),"%s","0002");
+      snprintf(profileName,sizeof(profileName),"%s","mailbox");
       memset(boardConfig, 0x00, sizeof(boardConfig));      
       boardConfig[PROXIMITY]  = true;
   }
-  
-  Serial.print("nodeName"); Serial.println(nodeName);
-  
+  Serial.print("nodeName"); Serial.println(nodeName); 
 }
 boolean manager_IsHouse(void)
 {    
@@ -413,7 +443,6 @@ boolean manager_IsHouse(void)
      bInit = true;
      return bHouse ;
 }
-
 
 int manager_getNameIdx(char * name)
 {
@@ -443,18 +472,13 @@ int manager_getValueInt(int name_idx, char * value)
    else
        return -1;
 }
-void manager_getValueString(int name_idx, int value, String & sValue)
-{
-     char buf[BUF_LEN];
-     String strVal;
-      
+
+void manager_getValueString(int name_idx, int value, char * cVal, int len)
+{      
      if (name_idx <=STRING_TYPE)
-         sValue = String(values[name_idx][value]);
+         strncpy(cVal,values[name_idx][value],len);
      else
-     {
-         sprintf(buf,"%d",value);
-         sValue = String(buf);
-     }
+         snprintf(cVal,len,"%d",value);
 }
 
 void manager_nodeStatusUpdate(void)
@@ -528,32 +552,21 @@ void manager_statsTransitionPolicy(int name_idx,int prev, int cur)
         if (name_idx == PROXIMITY && prev == VACANT && cur == OCCUPIED)
             command_sendMessage("toast", "info","New mail is arrived");
         return;
-      }     
+      }
       
      if (name_idx == DOOR && prev == CLOSE && cur == OPEN && curStatus[ALARM] == ON)
-         command_sendMessage("toast", "warn", "The door is opened manually.");
+         command_sendMessage("toast", "warn", "Door is opened manually");
      
      if (name_idx == PROXIMITY && prev == VACANT && cur == OCCUPIED && curStatus[ALARM] == ON)
-         command_sendMessage("toast", "warn", "The house is suddenly occupied."); 
+         command_sendMessage("toast", "warn", "House is suddenly occupied"); 
       
 
      if (name_idx == PROXIMITY && prev == OCCUPIED && cur == VACANT && curStatus[ALARM] == OFF)
      {
-         command_sendMessage("alert", "info", "The house is vacant, but alarm is off");
+         command_sendMessage("alert", "info", "House is vacant, but alarm is off");
          autoAlarmOnStart = true;
      }
-#if 0     
-     if (name_idx == ALARM && prev == ON && cur == OFF && curStatus[PROXIMITY] == VACANT)
-     {
-         command_sendMessage("alert", "info", "Door opened! But alarm is not ON.");
-         autoAlarmOnStart = true;
-     }
-#endif
 }
-
-
-
-/* 30sec */
 void manager_statusPolicy(unsigned long diff)
 {
   static unsigned long autoLightOffTimer = 0 ;
@@ -636,17 +649,57 @@ void manager_initialization(void)
 /********************************************************************************************
 Arduino Porting
 *********************************************************************************************/
+#ifdef DEBUG
+void showMemoryMap(void)
+{
+  char stack = 1;
+  extern char *__data_start;
+  extern char *__data_end;
+  extern char *__bss_start;
+  extern char *__bss_end;
+  extern char *__heap_start;
+  extern char *__heap_end;
+  
+  int	data_size	=	(int)&__data_end - (int)&__data_start;
+  int	bss_size	=	(int)&__bss_end - (int)&__data_end;
+  int	heap_end	=	(int)&stack - (int)&__malloc_margin;
+  int	heap_size	=	heap_end - (int)&__bss_end;
+  int	stack_size	=	RAMEND - (int)&stack + 1;
+  int	Aavailable	=	(RAMEND - (int)&__data_start + 1);
+  
+  Aavailable	-=	data_size + bss_size + heap_size + stack_size;
 
+  Serial.print("available =");
+  Serial.println(Aavailable);
+  Serial.println();
+  Serial.println();
+}
+#endif
+
+int get_free_memory()
+{
+extern char __bss_end;
+extern char *__brkval;
+
+  int free_memory;
+
+  if((int)__brkval == 0)
+    free_memory = ((int)&free_memory) - ((int)&__bss_end);
+  else
+    free_memory = ((int)&free_memory) - ((int)__brkval);
+
+  return free_memory;
+}
 
 void setup() {
-  int i =0 ;
-  int nretry = 5;
-  int result; 
-  String payload;
   Serial.begin(115200);
   myservo.attach(ServoPin);                     // Attach to servo
 
+#ifdef HOTEL_WIFI
+  WiFi.begin(WIFI_SSID, WIFI_PASS);
+#else
   WiFi.begin(WIFI_SSID);
+#endif  
   
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
@@ -655,63 +708,39 @@ void setup() {
   
   // Print connection information to the debug terminal
   printConnectionStatus();
-  managere_scanNode();
+  Serial.println();
+  Serial.print("Free memory : ");
+  Serial.println(get_free_memory());
+
+  manager_scanNode();
   
   Serial.print("webServer Connecting to ");
   command_createSANode();
   
-  Serial.print("Connecting to ");
-  Serial.println(MQTT_SERVER);
-  
-  for ( i = 0 ;i < 5 ; i ++)
-  {
-    result = client.connect(MQTT_CLIENT_ID);
-   
-    if (result) {
-          Serial.println("Connected to MQTT broker");
-          break;
-    }
-    else {
-          Serial.println("MQTT connect failed");
-          Serial.println("Will reset and try again...");
-    }      
-  }
   manager_initialization();
   
-  for ( i = 0 ; i < sizeof(subscribe_method)/sizeof(char *) ; i ++)
-  { 
-    char topic[BUF_LEN];
-    snprintf(topic, BUF_LEN, "%s/%s",topicPrefix, subscribe_method[i]);
-    Serial.println(topic);
-    
-    if (!client.subscribe(topic)){
-      Serial.println("fail to subscribe!");
-    }
-  }
+  network_eventBusConnect(false);
 }
 
 void loop() {
   static boolean bInit = false;
-  
   if (bInit == false)
   {
     manager_nodeStatusCheck(UPDATE_PERIODIC_TIME);
     command_postQuery();
+   // command_sendProfileHead();
     bInit=true;
   }
-  
-  client.loop();
-  
+  if (client.loop() == 0)
+  {
+    Serial.println("Server Reconnect");
+    network_eventBusConnect(true);
+  }
   command_postQuery();
   command_postControl(); 
-
-  //test();
   manager_nodeStatusCheck(UPDATE_PERIODIC_TIME);
   manager_nodeStatusUpdate();
   manager_statusPolicy(UPDATE_PERIODIC_TIME);
-  
- //  if(!getPage(server,serverPort,pageAdd)) Serial.print(F("Fail "));
-  //  else Serial.print(F("Pass "));
 }
 
 
