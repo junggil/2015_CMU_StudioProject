@@ -1,24 +1,35 @@
 (function() {
   var app = angular.module('iotAnyware', ['ui.bootstrap', 'ui-notification'])
   .controller('SAnodeCtrl', ['$log', '$scope', '$http', 'Notification', function($log, $scope, $http, Notification) {
-      $scope.user = 'simpson.homer@gmail.com'
-      $scope.token = 'cc7b3c54c35eacac';
-      $scope.clientId = '75f9e675-9db4-4d02-b523-37521ef656ea'
 
       var self = this;
       self.nodes = {}; 
       self.logs = [];
+      self.members = [
+          {name: 'Jangsu Lee',    img: 'member1.gif', tooltip: 'Team Leader / Managing Engineer'},
+          {name: 'Yoonki Hong',   img: 'member2.gif', tooltip: 'Requirements Eng. / Technical Writer'},
+          {name: 'Jeonggil Lee',  img: 'member3.gif', tooltip: 'Chief Architect / Support Engineer'},
+          {name: 'Changwook Lim', img: 'member4.gif', tooltip: 'Developer'},
+          {name: 'Jaehoon Kim',   img: 'member5.gif', tooltip: 'Developer'},
+      ]
 
+      $scope.clientId = '75f9e675-9db4-4d02-b523-37521ef656ea'
       $scope.currentPage = 1;
       $scope.pageSize = 15;
       $scope.registerNodeInfo = {virtual: 'Use Real Device'};
+      $scope.loginInfo = {};
+      $scope.signupInfo = {};
       $scope.isCollapsed = {};
-      $scope.alertMsg = '';
+      $scope.alertMsg = {};
       $scope.nodeConfig = '';
 
       client = new Paho.MQTT.Client('54.166.26.101', 8080, '/', 'myclientid_' + parseInt(Math.random() * 100, 10))
       client.onMessageArrived = onMessageArrived;
-      client.connect({onSuccess:onConnect});
+      client.connect();
+
+      $scope.isLoggedIn = function() {
+          return $scope.token !== undefined;
+      };
 
       $scope.isEmptyObject = function(obj) {
           return Object.keys(obj).length == 0;
@@ -88,6 +99,46 @@
           $scope.isCollapsed[nodeId] = !$scope.isCollapsed[nodeId];
       }
 
+      $scope.signup = function() {
+          $http({url:'/account/registerNewUser', method:'POST', 
+              data:{email:$scope.signupInfo.email, password:$scope.signupInfo.password, nickName: $scope.signupInfo.name},
+              headers: {'Content-type': 'application/json', 'x-client-id': $scope.clientId}}).then(function (res) {
+                  if (res.data.statusCode === 200) {
+                      $scope.alertMsg = {};
+                      Notification.success({message:'Registeration Success. <br> Please check your mail box'});
+                      $('#signupModal .close').click();
+                  } else {
+                      console.log(res.data.result);
+                      $scope.alertMsg.signup = res.data.result;
+                  }
+              });
+      };
+
+      $scope.logout = function() {
+          $scope.token = undefined;
+          $scope.user = undefined;
+          self.nodes = {};
+          self.logs = [];
+      }
+
+      $scope.login = function() {
+          $http({url:'/session/createUser', method:'POST', 
+              data:{email:$scope.loginInfo.email, password:$scope.loginInfo.password},
+              headers: {'Content-type': 'application/json', 'x-client-id': $scope.clientId}}).then(function (res) {
+                  if (res.data.statusCode === 200) {
+                      $scope.alertMsg = {};
+                      $scope.user = $scope.loginInfo.email;
+                      $scope.token = res.data.result.session;
+                      $scope.init();
+                      $('#loginModal .close').click();
+                      $scope.loginInfo = {};
+                  } else {
+                      console.log(res.data.result);
+                      $scope.alertMsg.login = res.data.result;
+                  }
+              });
+      };
+
       $scope.registerNode = function() {
           $http({url:'/user/registerNode', method:'POST', 
               data:{session:$scope.token, nodeId:$scope.registerNodeInfo.nodeId, 
@@ -96,10 +147,10 @@
                   if (res.data.statusCode === 200) {
                       $('#registerModal .close').click();
                       $scope.registerNodeInfo = {virtual:'Use Real Device'};
-                      $scope.alertMsg = '';
+                      $scope.alertMsg = {};
                   } else {
                       console.log(res.data.result);
-                      $scope.alertMsg = res.data.result;
+                      $scope.alertMsg.reg = res.data.result;
                       $('#registerNodeId').focus();
                   }
               });
@@ -157,11 +208,12 @@
         }
       }
 
-      function onConnect() {
+      $scope.init = function() {
         client.subscribe('/user/'+$scope.user+'/register');
         $http({url:'/user/getNodeList?session=' + $scope.token, method:'GET', 
                     headers: {'Content-type': 'application/json', 'x-client-id': $scope.clientId}}).then(function (res) {
             if (res.data.statusCode === 200) {
+                console.log(res.data.result);
                 angular.forEach(res.data.result, function(nodeInfo) {
                     nodeInfo.status = {};
                     delete nodeInfo.profiles;
@@ -176,6 +228,8 @@
         });
         $scope.refreshLog();
      }
+
+     $('html body').scrollTop(0);
   }])
   .config(function($interpolateProvider) {
       $interpolateProvider.startSymbol('[[');

@@ -48,10 +48,17 @@
                         <a class="page-scroll" href="#page-top">Register</a>
                     </li>
                     <li>
-                        <a class="page-scroll" href="#devices">Devices</a>
+                        <a class="page-scroll" href="#devices" ng-disabled="isEmptyObject(nodeCtrl.nodes)">Devices</a>
                     </li>
                     <li>
                         <a class="page-scroll" href="#logs">Logs</a>
+                    </li>
+                    <li>
+                        <a href="#" data-toggle="modal" data-target="#loginModal" ng-hide="isLoggedIn()">Sign in</a>
+                        <a href="#" ng-click="logout()" ng-show="isLoggedIn()">Logout</a>
+                    </li>
+                    <li>
+                        <a href="#" data-toggle="modal" data-target="#signupModal" ng-hide="isLoggedIn()">Sign up</a>
                     </li>
                     <li>
                         <a class="page-scroll" href="#about">About</a>
@@ -64,13 +71,13 @@
     </nav>
 
     <!-- register Header -->
-    <header class="register">
+    <header class="register" focus>
         <div class="register-body">
             <div class="container">
                 <div class="col-md-8 col-md-offset-2">
                     <h2>Register your first node</h2>
                     <p class="register-text">SA Node, Smart Mailbox is now available.<br>Enjoy free, easy, simple smart home service :)</p>
-                    <a data-toggle="modal" data-target="#registerModal" class="btn btn-circle">
+                    <a data-toggle="modal" data-target="#registerModal" class="btn btn-circle" ng-disabled="!isLoggedIn()">
                         <i class="fa fa-plus animated"></i>
                     </a>
                 </div>
@@ -142,11 +149,114 @@
     <section id="about" class="container content-section text-center">
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2">
-                <h2>About IoT Anyware</h2>
-                <p>Grayscale is a free Bootstrap 3 theme created by Start Bootstrap. It can be yours right now, simply download the template on <a href="http://startbootstrap.com/template-overviews/grayscale/">the preview page</a>. The theme is open source, and you can use it for any purpose, personal or commercial.</p>
-                <p>This theme features stock photos by <a href="http://gratisography.com/">Gratisography</a> along with a custom Google Maps skin courtesy of <a href="http://snazzymaps.com/">Snazzy Maps</a>.</p>
-                <p>Grayscale includes full HTML, CSS, and custom JavaScript files along with LESS files for easy customization.</p>
+                <h2>About IoT Anyware team</h2>
+                <div class="row member" ng-repeat="member in nodeCtrl.members" tooltip="[[member.tooltip]]">
+                    <div class="col-md-4 col-md-offset-2">
+                        <img ng-src="/static/img/[[member.img]]">
+                    </div>
+                    <div class="col-md-6 text-left">
+                        <h3>[[member.name]]</h3>
+                    </div>
+                </div>
             </div>
+        </div>
+    </section>
+
+    <!-- Sign in modals -->
+    <section id="modals" class="container content-section text-center">
+        <!-- Modal -->
+        <div class="modal fade" id="loginModal" tabindex="-1" role="dialog">
+          <div class="modal-dialog" role="document">
+            <form name="loginForm" novalidate>
+            <div class="modal-content">
+              <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 style="color:black;" class="modal-title" id="myModalLabel">Sign In</h4>
+              </div>
+              <div class="modal-body">
+                  <div class="container-fluid">
+                      <div class="row">
+                          <div class="col-md-2 text-right">
+                              <i class="material-icons">email</i>
+                          </div>
+                          <div class="col-md-10">
+                               <input type="email" ng-model="loginInfo.email" class="form-control" placeholder="Email" required autofocus>
+                          </div>
+                      </div>
+                      <div class="row">
+                          <div class="col-md-2 text-right">
+                              <i class="material-icons">vpn_key</i>
+                          </div>
+                          <div class="col-md-10">
+                               <input type="password" ng-minlength="6" ng-model="loginInfo.password" class="form-control" placeholder="Password" required>
+                          </div>
+                      </div>
+                      <div class="row">
+                          <alert type="danger"  ng-hide="loginForm.$valid && !alertMsg.login">[[alertMsg.login || "Invalid Form. Please Check Again."]]</alert>
+                          <alert type="success" ng-show="loginForm.$valid && !alertMsg.login">Valid Form. Good to go! </alert>
+                      </div>
+                  </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" ng-click="login()" ng-disabled="!loginForm.$valid">Login</button>
+              </div>
+            </form>
+            </div>
+          </div>
+        </div>
+    </section>
+
+    <!-- Sign up modals -->
+    <section id="modals" class="container content-section text-center">
+        <!-- Modal -->
+        <div class="modal fade" id="signupModal" tabindex="-1" role="dialog">
+          <div class="modal-dialog" role="document">
+            <form name="signupForm" novalidate>
+            <div class="modal-content">
+              <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 style="color:black;" class="modal-title" id="myModalLabel">Sign Up</h4>
+              </div>
+              <div class="modal-body">
+                  <div class="container-fluid">
+                      <div class="row">
+                          <div class="col-md-2 text-right">
+                              <i class="material-icons">email</i>
+                          </div>
+                          <div class="col-md-10">
+                               <input type="email" ng-model="signupInfo.email" class="form-control" placeholder="Email" required autofocus>
+                          </div>
+                      </div>
+                      <div class="row">
+                          <div class="col-md-2 text-right">
+                              <i class="material-icons">vpn_key</i>
+                          </div>
+                          <div class="col-md-10">
+                               <input type="password" ng-minlength="6" ng-model="signupInfo.password" class="form-control" placeholder="Password" required>
+                          </div>
+                      </div>
+                      <div class="row">
+                          <div class="col-md-2 text-right">
+                              <i class="material-icons">face</i>
+                          </div>
+                          <div class="col-md-10">
+                               <input type="text" ng-minlength="6" ng-model="signupInfo.name" class="form-control" placeholder="Display Name" required>
+                          </div>
+                      </div>
+                      <div class="row">
+                          <alert type="danger"  ng-hide="signupForm.$valid && !alertMsg.signup">[[alertMsg.signup|| "Invalid Form. Please Check Again."]]</alert>
+                          <alert type="success" ng-show="signupForm.$valid && !alertMsg.signup">Valid Form. Good to go! </alert>
+                      </div>
+                  </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" ng-click="signup()" ng-disabled="!signupForm.$valid">Submit</button>
+              </div>
+            </form>
+            </div>
+          </div>
         </div>
     </section>
 
@@ -191,8 +301,8 @@
                           </div>
                       </div>
                       <div class="row" collapse="registerNode.$valid">
-                          <alert type="danger"  ng-hide="registerNodeForm.$valid && !alertMsg">[[alertMsg || "Invalid Form. Please Check Again."]]</alert>
-                          <alert type="success" ng-show="registerNodeForm.$valid && !alertMsg">Valid Form. Good to go! </alert>
+                          <alert type="danger"  ng-hide="registerNodeForm.$valid && !alertMsg.reg">[[alertMsg.reg || "Invalid Form. Please Check Again."]]</alert>
+                          <alert type="success" ng-show="registerNodeForm.$valid && !alertMsg.reg">Valid Form. Good to go! </alert>
                       </div>
                           
                   </div>
