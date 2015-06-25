@@ -198,9 +198,9 @@
             }
         } else if (topicType == 'notify') {
             if (payload.type === 'toast') {
-                Notification.success(payload.warn);
+                Notification.success(payload.info || payload.warn);
             } else {
-                Notification.warning({message: payload.info});
+                Notification.warning(payload.info || payload.warn);
             }
         } else if (topicType == 'heartbeat') {
             delete self.nodes[nodeId];
